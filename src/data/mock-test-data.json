@@ -1,0 +1,143 @@
+{
+  "testHistory": [
+    {
+      "id": "test_001",
+      "testType": "cinomose",
+      "testLabel": "Cinomose",
+      "timestamp": "2024-01-15T10:30:00Z",
+      "operator": "Vet. Luíza",
+      "animalName": "Rex",
+      "animalSpecies": "Cão",
+      "result": "Positivo",
+      "notes": "Teste realizado com sucesso. Animal apresentou sintomas característicos."
+    },
+    {
+      "id": "test_002",
+      "testType": "ibv_geral",
+      "testLabel": "IBV Geral",
+      "timestamp": "2024-01-14T14:20:00Z",
+      "operator": "Dr. Carlos",
+      "animalName": "Mimi",
+      "animalSpecies": "Gato",
+      "result": "Negativo",
+      "notes": "Teste de rotina. Animal saudável."
+    },
+    {
+      "id": "test_003",
+      "testType": "ibv_especifico",
+      "testLabel": "IBV Específico",
+      "timestamp": "2024-01-13T09:15:00Z",
+      "operator": "Vet. Luíza",
+      "animalName": "Thor",
+      "animalSpecies": "Cão",
+      "result": "Positivo",
+      "notes": "Detecção de anticorpos específicos. Recomenda-se acompanhamento."
+    },
+    {
+      "id": "test_004",
+      "testType": "cinomose",
+      "testLabel": "Cinomose",
+      "timestamp": "2024-01-12T16:45:00Z",
+      "operator": "Dr. Ana",
+      "animalName": "Luna",
+      "animalSpecies": "Cão",
+      "result": "Negativo",
+      "notes": "Teste preventivo. Animal vacinado recentemente."
+    },
+    {
+      "id": "test_005",
+      "testType": "ibv_geral",
+      "testLabel": "IBV Geral",
+      "timestamp": "2024-01-11T11:30:00Z",
+      "operator": "Vet. Luíza",
+      "animalName": "Bella",
+      "animalSpecies": "Gato",
+      "result": "Positivo",
+      "notes": "Sintomas respiratórios leves. Iniciar tratamento."
+    },
+    {
+      "id": "test_006",
+      "testType": "ibv_especifico",
+      "testLabel": "IBV Específico",
+      "timestamp": "2024-01-10T08:20:00Z",
+      "operator": "Dr. Carlos",
+      "animalName": "Max",
+      "animalSpecies": "Cão",
+      "result": "Negativo",
+      "notes": "Teste de controle pós-tratamento. Resultado satisfatório."
+    },
+    {
+      "id": "test_007",
+      "testType": "cinomose",
+      "testLabel": "Cinomose",
+      "timestamp": "2024-01-09T13:10:00Z",
+      "operator": "Dr. Ana",
+      "animalName": "Nina",
+      "animalSpecies": "Cão",
+      "result": "Positivo",
+      "notes": "Caso grave. Internação necessária."
+    },
+    {
+      "id": "test_008",
+      "testType": "ibv_geral",
+      "testLabel": "IBV Geral",
+      "timestamp": "2024-01-08T15:55:00Z",
+      "operator": "Vet. Luíza",
+      "animalName": "Simba",
+      "animalSpecies": "Gato",
+      "result": "Negativo",
+      "notes": "Check-up anual. Animal em perfeita saúde."
+    }
+  ],
+  "operators": [
+    {
+      "id": "op_001",
+      "name": "Vet. Luíza",
+      "specialty": "Clínica Geral",
+      "active": true
+    },
+    {
+      "id": "op_002",
+      "name": "Dr. Carlos",
+      "specialty": "Infectologia",
+      "active": true
+    },
+    {
+      "id": "op_003",
+      "name": "Dr. Ana",
+      "specialty": "Emergência",
+      "active": true
+    }
+  ],
+  "testTypes": [
+    {
+      "key": "cinomose",
+      "label": "Cinomose",
+      "description": "Teste para detecção do vírus da cinomose canina",
+      "species": ["Cão"],
+      "duration": "15-20 minutos"
+    },
+    {
+      "key": "ibv_geral",
+      "label": "IBV Geral",
+      "description": "Teste geral para Bronquite Infecciosa Viral",
+      "species": ["Cão", "Gato"],
+      "duration": "10-15 minutos"
+    },
+    {
+      "key": "ibv_especifico",
+      "label": "IBV Específico",
+      "description": "Teste específico para detecção de anticorpos IBV",
+      "species": ["Cão", "Gato"],
+      "duration": "20-25 minutos"
+    }
+  ],
+  "statistics": {
+    "totalTests": 8,
+    "positiveResults": 4,
+    "negativeResults": 4,
+    "mostCommonTest": "cinomose",
+    "mostActiveOperator": "Vet. Luíza",
+    "lastTestDate": "2024-01-15T10:30:00Z"
+  }
+}

@@ -1,0 +1,64 @@
+diff --git a/node_modules/react-native-sqlite-storage/platforms/android/build.gradle b/node_modules/react-native-sqlite-storage/platforms/android/build.gradle
+index ff79b10..51ee962 100644
+--- a/node_modules/react-native-sqlite-storage/platforms/android/build.gradle
++++ b/node_modules/react-native-sqlite-storage/platforms/android/build.gradle
+@@ -1,7 +1,7 @@
+ buildscript {
+     repositories {
+         google()
+-        jcenter()
++        mavenCentral()
+     }
+ 
+     dependencies {
+@@ -16,7 +16,7 @@ def safeExtGet(prop, fallback) {
+ }
+ 
+ android {
+-    compileSdkVersion safeExtGet('compileSdkVersion', 23)
++    compileSdk safeExtGet('compileSdkVersion', safeExtGet('compileSdk', 23))
+     buildToolsVersion safeExtGet('buildToolsVersion', '27.0.3')
+ 
+     defaultConfig {
+diff --git a/node_modules/react-native-sqlite-storage/react-native.config.js b/node_modules/react-native-sqlite-storage/react-native.config.js
+index dc150a9..4d2e0e8 100644
+--- a/node_modules/react-native-sqlite-storage/react-native.config.js
++++ b/node_modules/react-native-sqlite-storage/react-native.config.js
+@@ -1,22 +1,24 @@
+ module.exports = {
+ 	dependency: {
+ 		platforms: {
+-			ios: {
+-				project: './platforms/ios/SQLite.xcodeproj'
+-			},
++			// iOS project configuration removed - using autolinking
++			// ios: {
++			// 	project: './platforms/ios/SQLite.xcodeproj'
++			// },
+ 			android: {
+ 				sourceDir: './platforms/android'
+ 			},
+-			windows: {
+-				sourceDir: './platforms/windows',
+-				solutionFile: 'SQLitePlugin.sln',
+-				projects: [
+-				  {
+-					projectFile: 'SQLitePlugin/SQLitePlugin.vcxproj',
+-					directDependency: true,
+-				  }
+-				],
+-			}
++			// Windows configuration removed - not needed for React Native CLI
++			// windows: {
++			// 	sourceDir: './platforms/windows',
++			// 	solutionFile: 'SQLitePlugin.sln',
++			// 	projects: [
++			// 	  {
++			// 		projectFile: 'SQLitePlugin/SQLitePlugin.vcxproj',
++			// 		directDependency: true,
++			// 	  }
++			// 	],
++			// }
+ 		}
+ 	}
+ }

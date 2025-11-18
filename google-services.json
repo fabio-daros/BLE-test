@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "316827163539",
+    "project_id": "inpunto-46140",
+    "storage_bucket": "inpunto-46140.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316827163539:android:f32a1772aef3f1cab56666",
+        "android_client_info": {
+          "package_name": "com.inpunto"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "316827163539-o2pfhni8ba0nmlr6rm7jr2v6g9nl9i2p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.inpunto",
+            "certificate_hash": "15e427b23884789e969d331f6657f915cd3a9922"
+          }
+        },
+        {
+          "client_id": "316827163539-ijnl4jrki6gruvrru7874b64tdlkvtj3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwGuIvz1_GZ9IwN1d4_hWcEeUO2JETw4c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "316827163539-ijnl4jrki6gruvrru7874b64tdlkvtj3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

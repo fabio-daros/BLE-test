@@ -19,3 +19,25 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Resolução de dependências para migrar Android Support para AndroidX
+allprojects {
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                // Substitui qualquer versão de appcompat-v7 por AndroidX
+                if (details.requested.group == 'com.android.support' && 
+                    details.requested.name == 'appcompat-v7') {
+                    details.useTarget "androidx.appcompat:appcompat:1.6.1"
+                    details.because "Migração para AndroidX - versão ${details.requested.version} não existe"
+                }
+                // Substitui support-v4 por AndroidX
+                if (details.requested.group == 'com.android.support' && 
+                    details.requested.name == 'support-v4') {
+                    details.useTarget "androidx.legacy:legacy-support-v4:1.0.0"
+                    details.because "Migração para AndroidX"
+                }
+            }
+        }
+    }
+}

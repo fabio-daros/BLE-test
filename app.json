@@ -1,4 +1,17 @@
 {
   "name": "inpunto",
-  "displayName": "inpunto"
+  "displayName": "INpunto",
+  "version": "1.0.0",
+  "extra": {
+    "APP_ENV": "production",
+    "API_BASE_URL": "https://api.inpunto.com",
+    "BLE_UUIDS": "0000110B-0000-1000-8000-00805F9B34FB",
+    "LOG_LEVEL": "info",
+    "LOG_RETENTION_DAYS": 30,
+    "LOG_MAX_ENTRIES": 10000,
+    "CLERK_PUBLISHABLE_KEY": "pk_test_bG95YWwtemVicmEtOTkuY2xlcmsuYWNjb3VudHMuZGV2JA",
+    "HARDWARE_SIM_EXTERNAL_WS_URL": "http://192.168.1.14:8081",
+    "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "316827163539-qcfp294tr1ejl6ru3vudhvp33ptq8oq4.apps.googleusercontent.com",
+    "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "316827163539-o2pfhni8ba0nmlr6rm7jr2v6g9nl9i2p.apps.googleusercontent.com"
+  }
 }
