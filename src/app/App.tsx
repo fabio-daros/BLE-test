@@ -116,7 +116,7 @@ export const App: React.FC = () => {
     | 'pipettingInProgress'
     | 'sampleIdentification'
     | 'bluetoothConnection'
-  >('splash');
+  >('bluetoothConnection'); // 🧪 TESTE: Abrindo diretamente na tela de Bluetooth
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [phoneVerificationData, setPhoneVerificationData] = useState<{
     phoneNumber: string;

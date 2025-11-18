@@ -1,6 +1,6 @@
-// Tipos compartilhados para Bluetooth (BLE e Clássico)
+// Tipos compartilhados para Bluetooth (BLE)
 
-export type BluetoothDeviceType = 'ble' | 'classic';
+export type BluetoothDeviceType = 'ble';
 
 export interface BluetoothDevice {
   id: string;

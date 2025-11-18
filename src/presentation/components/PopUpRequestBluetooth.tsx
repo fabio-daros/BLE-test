@@ -21,7 +21,7 @@ interface DeviceListItem {
   id: string;
   name: string;
   rssi?: number | null;
-  type?: 'ble' | 'classic';
+  type?: 'ble';
 }
 
 interface Props {
@@ -94,23 +94,9 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
               {item.name}
             </Text>
             {item.type && (
-              <View
-                style={[
-                  styles.deviceTypeBadge,
-                  item.type === 'ble'
-                    ? styles.deviceTypeBadgeBle
-                    : styles.deviceTypeBadgeClassic,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.deviceTypeText,
-                    item.type === 'ble'
-                      ? styles.deviceTypeTextBle
-                      : styles.deviceTypeTextClassic,
-                  ]}
-                >
-                  {item.type === 'ble' ? 'BLE' : 'Clássico'}
+              <View style={[styles.deviceTypeBadge, styles.deviceTypeBadgeBle]}>
+                <Text style={[styles.deviceTypeText, styles.deviceTypeTextBle]}>
+                  BLE
                 </Text>
               </View>
             )}
@@ -442,20 +428,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gold,
   },
-  deviceTypeBadgeClassic: {
-    backgroundColor: '#e3f2fd',
-    borderWidth: 1,
-    borderColor: '#2196f3',
-  },
   deviceTypeText: {
     fontSize: 10,
     fontWeight: '600',
   },
   deviceTypeTextBle: {
     color: colors.goldDark,
-  },
-  deviceTypeTextClassic: {
-    color: '#1976d2',
   },
   deviceSignal: {
     fontSize: 13,

@@ -24,17 +24,6 @@ import { BottomBar } from '@/ui/BottomBar';
 import { HomeHeader } from '../components/HomeHeader';
 import { colors } from '@presentation/theme';
 import { PopUpRequestBluetooth } from '../components/PopUpRequestBluetooth';
-// Importação opcional do Bluetooth clássico
-let ClassicBluetoothService:
-  | typeof import('@services/bluetooth').ClassicBluetoothService
-  | null = null;
-try {
-  const bluetoothModule = require('@services/bluetooth');
-  ClassicBluetoothService = bluetoothModule.ClassicBluetoothService;
-} catch (error) {
-  // Bluetooth clássico não disponível - continuar apenas com BLE
-  console.warn('Bluetooth clássico não disponível:', error);
-}
 import type { BluetoothDevice } from '@services/bluetooth/types';
 
 // IntentLauncher removido - usando react-native-intent-launcher ou Linking diretamente
@@ -91,14 +80,12 @@ export const HomeWip: React.FC<Props> = ({
   const [bleManagerInitChecked, setBleManagerInitChecked] = useState(false);
 
   const bleManagerRef = useRef<BleManager | null>(null);
-  const classicBluetoothServiceRef = useRef<any | null>(null);
   const scanStopRef = useRef<(() => void) | null>(null);
   const devicesMapRef = useRef(new Map<string, BluetoothDevice>());
   const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
   const isScanningRef = useRef(false);
   const scanStartAttemptRef = useRef(false);
-  const classicScanUnsubscribersRef = useRef<Array<() => void>>([]);
 
   const androidVersion =
     Platform.OS === 'android'
@@ -126,22 +113,6 @@ export const HomeWip: React.FC<Props> = ({
       });
     }
 
-    // Inicializar serviço de Bluetooth clássico (opcional)
-    if (ClassicBluetoothService) {
-      try {
-        const classicService = new ClassicBluetoothService();
-        classicBluetoothServiceRef.current = classicService;
-        logUserAction('bluetooth_classic_service_initialized');
-      } catch (error) {
-        logUserAction('bluetooth_classic_service_init_failed', {
-          message: (error as Error).message,
-        });
-        // Não bloquear se o serviço clássico falhar, apenas logar
-      }
-    } else {
-      logUserAction('bluetooth_classic_service_not_available');
-    }
-
     setBleManagerInitChecked(true);
 
     return () => {
@@ -154,14 +125,9 @@ export const HomeWip: React.FC<Props> = ({
         scanStopRef.current();
         scanStopRef.current = null;
       }
-      // Limpar listeners do Bluetooth clássico
-      classicScanUnsubscribersRef.current.forEach(unsub => unsub());
-      classicScanUnsubscribersRef.current = [];
       // Destruir serviços
       bleManagerRef.current?.destroy();
       bleManagerRef.current = null;
-      classicBluetoothServiceRef.current?.destroy();
-      classicBluetoothServiceRef.current = null;
     };
   }, [logUserAction]);
 
@@ -193,17 +159,6 @@ export const HomeWip: React.FC<Props> = ({
       scanStopRef.current();
       scanStopRef.current = null;
     }
-    // Parar scan clássico
-    if (classicBluetoothServiceRef.current) {
-      try {
-        classicBluetoothServiceRef.current.stopScan();
-      } catch (error) {
-        // Ignorar erros ao parar scan clássico
-      }
-    }
-    // Limpar listeners do Bluetooth clássico
-    classicScanUnsubscribersRef.current.forEach(unsub => unsub());
-    classicScanUnsubscribersRef.current = [];
     if (isMountedRef.current) {
       setIsScanningDevices(false);
     }
@@ -700,63 +655,34 @@ export const HomeWip: React.FC<Props> = ({
       });
 
       try {
-        if (device.type === 'classic') {
-          // Conectar via Bluetooth clássico
-          if (!ClassicBluetoothService || !classicBluetoothServiceRef.current) {
-            throw new Error(
-              'Serviço de Bluetooth clássico não disponível. O hardware pode estar usando Bluetooth clássico, mas o suporte não está habilitado nesta build.'
-            );
-          }
-
-          await classicBluetoothServiceRef.current.connect(deviceId, {
-            timeout: 15000,
-          });
-
-          const connectedDevice =
-            classicBluetoothServiceRef.current.getConnectedDevice();
-          if (!connectedDevice || !isMountedRef.current) {
-            return;
-          }
-
-          setConnectedDevice({
-            id: connectedDevice.id,
-            name: connectedDevice.name,
-          });
-          setBluetoothInfoMessage('Equipamento conectado com sucesso!');
-          logUserAction('bluetooth_classic_device_connected', {
-            deviceId: connectedDevice.id,
-            deviceName: connectedDevice.name,
-          });
-        } else {
-          // Conectar via BLE
-          const manager = bleManagerRef.current;
-          if (!bleManagerAvailable || !manager) {
-            throw new Error(
-              'O módulo de Bluetooth não está disponível neste ambiente.'
-            );
-          }
-
-          const bleDevice = await manager.connectToDevice(deviceId, {
-            timeout: 15000,
-          });
-          await bleDevice.discoverAllServicesAndCharacteristics();
-
-          if (!isMountedRef.current) {
-            return;
-          }
-
-          const deviceName =
-            bleDevice.name?.trim() ||
-            bleDevice.localName?.trim() ||
-            'Equipamento';
-
-          setConnectedDevice({ id: bleDevice.id, name: deviceName });
-          setBluetoothInfoMessage('Equipamento conectado com sucesso!');
-          logUserAction('bluetooth_ble_device_connected', {
-            deviceId: bleDevice.id,
-            deviceName,
-          });
+        // Conectar via BLE
+        const manager = bleManagerRef.current;
+        if (!bleManagerAvailable || !manager) {
+          throw new Error(
+            'O módulo de Bluetooth não está disponível neste ambiente.'
+          );
         }
+
+        const bleDevice = await manager.connectToDevice(deviceId, {
+          timeout: 15000,
+        });
+        await bleDevice.discoverAllServicesAndCharacteristics();
+
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        const deviceName =
+          bleDevice.name?.trim() ||
+          bleDevice.localName?.trim() ||
+          'Equipamento';
+
+        setConnectedDevice({ id: bleDevice.id, name: deviceName });
+        setBluetoothInfoMessage('Equipamento conectado com sucesso!');
+        logUserAction('bluetooth_ble_device_connected', {
+          deviceId: bleDevice.id,
+          deviceName,
+        });
 
         if (successTimeoutRef.current) {
           clearTimeout(successTimeoutRef.current);
