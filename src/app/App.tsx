@@ -2,31 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, Alert } from 'react-native';
 import { Constants } from '@config/env';
 
-// Import do ClerkProvider
-// Tentar importar de forma que funcione no React Native CLI
-let ClerkProvider: any;
-try {
-  // @ts-ignore
-  const clerkExpo = require('@clerk/clerk-expo');
-  ClerkProvider = clerkExpo.ClerkProvider;
-  
-  if (!ClerkProvider) {
-    // Tentar importar diretamente do provider
-    // @ts-ignore
-    const providerModule = require('@clerk/clerk-expo/dist/provider/ClerkProvider');
-    ClerkProvider = providerModule.ClerkProvider || providerModule.default;
-  }
-  
-  if (!ClerkProvider) {
-    console.error('ClerkProvider não encontrado no módulo @clerk/clerk-expo');
-    // Fallback vazio
-    ClerkProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-  }
-} catch (error) {
-  console.error('Erro ao carregar @clerk/clerk-expo:', error);
-  // Fallback vazio
-  ClerkProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-}
+// MOCK de Clerk para ambiente React Native CLI / testes BLE
+type ClerkProviderProps = { children: React.ReactNode };
+
+const ClerkProvider: React.FC<ClerkProviderProps> = ({ children }) => (
+  <>{children}</>
+);
+
 
 /**
  * 🧪 BOTÃO DE DESENVOLVIMENTO - GUIA DE USO
@@ -1960,22 +1942,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Obter Publishable Key do Clerk
-  const clerkPublishableKey =
-    Constants.expoConfig?.extra?.CLERK_PUBLISHABLE_KEY || '';
-
-  console.log('[CLERK] clerkPublishableKey', clerkPublishableKey);
-  // Se não houver chave, mostrar erro
-  if (!clerkPublishableKey) {
-    logger.error('CLERK_PUBLISHABLE_KEY não configurada', {}, 'auth');
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>
-          Erro: CLERK_PUBLISHABLE_KEY não configurada
-        </Text>
-      </View>
-    );
-  }
+  
 
   // Componente interno que usa hooks do Clerk
   const AppContent: React.FC = () => {
@@ -1991,20 +1958,9 @@ export const App: React.FC = () => {
     );
   };
 
-  // Verificar se ClerkProvider está disponível
-  if (!ClerkProvider) {
-    logger.error('ClerkProvider não está disponível', {}, 'auth');
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>
-          Erro: ClerkProvider não está disponível. Verifique a instalação do @clerk/clerk-expo.
-        </Text>
-      </View>
-    );
-  }
 
   return (
-    <ClerkProvider publishableKey={clerkPublishableKey}>
+    <ClerkProvider>
       <AppContent />
     </ClerkProvider>
   );

@@ -126,7 +126,7 @@ export const HomeWip: React.FC<Props> = ({
         scanStopRef.current = null;
       }
       // Destruir serviços
-      bleManagerRef.current?.destroy();
+      // bleManagerRef.current?.destroy(); se destruir aqui o bluetooth nao se mantem aberto e buga o acesso.
       bleManagerRef.current = null;
     };
   }, [logUserAction]);
