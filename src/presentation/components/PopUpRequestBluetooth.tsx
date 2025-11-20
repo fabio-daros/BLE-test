@@ -125,7 +125,11 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
       statusBarTranslucent
     >
       {/* Backdrop que bloqueia interação fora do modal */}
-      <TouchableWithoutFeedback onPress={onClose}>
+      {/* Só permite fechar ao clicar fora quando estiver no modo 'request' (Permissão necessária) */}
+      <TouchableWithoutFeedback 
+        onPress={mode === 'request' && !loading ? onClose : undefined}
+        disabled={mode !== 'request' || loading}
+      >
         <View style={styles.backdrop}>
           <View style={styles.cardWrapper} pointerEvents="box-none">
             <TouchableWithoutFeedback>
