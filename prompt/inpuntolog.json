@@ -1,0 +1,440 @@
+{
+  "metadata": {
+    "device": {
+      "deviceId": "773f1eff",
+      "name": "Xiaomi Mi 9 Lite",
+      "serialNumber": "773f1eff",
+      "isOnline": true,
+      "release": "11",
+      "sdk": 30,
+      "featureLevel": 30,
+      "model": "Mi 9 Lite",
+      "type": "HANDHELD",
+      "isEmulator": false
+    },
+    "filter": "com.inpunto",
+    "projectApplicationIds": []
+  },
+  "logcatMessages": [
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 310000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_manager_initialized\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_manager_initialized\u0027,\n  timestamp: \u00272025-11-20T21:55:19.308Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 320000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_permission_granted\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_permission_granted\u0027,\n  timestamp: \u00272025-11-20T21:55:19.317Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 322000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_state_listener_registered\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_state_listener_registered\u0027,\n  timestamp: \u00272025-11-20T21:55:19.319Z\u0027,\n  withInitialState: true,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 324000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_state_changed\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_state_changed\u0027,\n  timestamp: \u00272025-11-20T21:55:19.322Z\u0027,\n  state: \u0027PoweredOn\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 330000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_already_enabled\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_already_enabled\u0027,\n  timestamp: \u00272025-11-20T21:55:19.324Z\u0027,\n  state: \u0027PoweredOn\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 360000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 360000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 367000000
+        }
+      },
+      "message": "\u0027[BLE] Estado atual do Bluetooth:\u0027, \u0027PoweredOn\u0027"
+    },
+    {
+      "header": {
+        "logLevel": "ERROR",
+        "pid": 955,
+        "tid": 955,
+        "applicationId": "surfaceflinger",
+        "processName": "surfaceflinger",
+        "tag": "HWComposer",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 368000000
+        }
+      },
+      "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 369000000
+        }
+      },
+      "message": "[BLE] Iniciando scan de dispositivos..."
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 371000000
+        }
+      },
+      "message": "[BLE] Scan iniciado com sucesso"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 372000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_state_checked\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_state_checked\u0027,\n  timestamp: \u00272025-11-20T21:55:19.367Z\u0027,\n  state: \u0027PoweredOn\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 373000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_scan_starting\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_scan_starting\u0027,\n  timestamp: \u00272025-11-20T21:55:19.369Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 374000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_scan_started\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_scan_started\u0027,\n  timestamp: \u00272025-11-20T21:55:19.371Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 378000000
+        }
+      },
+      "message": "[BLE] Parando scan..."
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 379000000
+        }
+      },
+      "message": "[BLE] Scan parado com sucesso"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 13902,
+        "tid": 13948,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 382000000
+        }
+      },
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_manager_initialized\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_manager_initialized\u0027,\n  timestamp: \u00272025-11-20T21:55:19.380Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "ERROR",
+        "pid": 955,
+        "tid": 955,
+        "applicationId": "surfaceflinger",
+        "processName": "surfaceflinger",
+        "tag": "HWComposer",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 384000000
+        }
+      },
+      "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 399000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 399000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
+        "logLevel": "ERROR",
+        "pid": 955,
+        "tid": 955,
+        "applicationId": "surfaceflinger",
+        "processName": "surfaceflinger",
+        "tag": "HWComposer",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 401000000
+        }
+      },
+      "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 955,
+        "tid": 955,
+        "applicationId": "surfaceflinger",
+        "processName": "surfaceflinger",
+        "tag": "chatty",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 418000000
+        }
+      },
+      "message": "uid\u003d1000(system) /system/bin/surfaceflinger identical 1 line"
+    },
+    {
+      "header": {
+        "logLevel": "ERROR",
+        "pid": 955,
+        "tid": 955,
+        "applicationId": "surfaceflinger",
+        "processName": "surfaceflinger",
+        "tag": "HWComposer",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 434000000
+        }
+      },
+      "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
+    },
+    {
+      "header": {
+        "logLevel": "WARN",
+        "pid": 4400,
+        "tid": 9631,
+        "applicationId": "com.google.android.apps.tachyon",
+        "processName": "com.google.android.apps.tachyon",
+        "tag": "harmony",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 437000000
+        }
+      },
+      "message": "IMCVideoEncoder: Dropped frame, encoder queue full: 3"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 4400,
+        "tid": 4436,
+        "applicationId": "com.google.android.apps.tachyon",
+        "processName": "com.google.android.apps.tachyon",
+        "tag": "harmony",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 438000000
+        }
+      },
+      "message": "CommonClearcutLogger: Logging impression 8041"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 4400,
+        "tid": 4436,
+        "applicationId": "com.google.android.apps.tachyon",
+        "processName": "com.google.android.apps.tachyon",
+        "tag": "harmony",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 438000000
+        }
+      },
+      "message": "TY_com.google.android.libraries.communications.conference.service.impl.logging.CommonClearcutLogger: Logging impression 8041"
+    },
+    {
+      "header": {
+        "logLevel": "WARN",
+        "pid": 4400,
+        "tid": 4964,
+        "applicationId": "com.google.android.apps.tachyon",
+        "processName": "com.google.android.apps.tachyon",
+        "tag": "Binder",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 441000000
+        }
+      },
+      "message": "Caught a RuntimeException from the binder stub implementation.\njava.lang.UnsupportedOperationException\n\tat nmj.b(PG:3)\n\tat nmj.fv(PG:33)\n\tat hdi.onTransact(PG:21)\n\tat android.os.Binder.execTransactInternal(Binder.java:1162)\n\tat android.os.Binder.execTransact(Binder.java:1126)"
+    },
+    {
+      "header": {
+        "logLevel": "ERROR",
+        "pid": 955,
+        "tid": 955,
+        "applicationId": "surfaceflinger",
+        "processName": "surfaceflinger",
+        "tag": "HWComposer",
+        "timestamp": {
+          "seconds": 1763675719,
+          "nanos": 450000000
+        }
+      },
+      "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
+    }
+  ]
+}

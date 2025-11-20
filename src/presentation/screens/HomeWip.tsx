@@ -211,16 +211,23 @@ export const HomeWip: React.FC<Props> = ({
   };
 
   const cleanupScan = useCallback(() => {
+    console.log('[BLE] cleanupScan chamado');
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
       scanTimeoutRef.current = null;
     }
-    if (scanStopRef.current) {
+    // Só chamar stopScan se realmente estiver escaneando
+    if (isScanningRef.current && scanStopRef.current) {
+      console.log('[BLE] Chamando stopScan via cleanupScan');
       scanStopRef.current();
+      scanStopRef.current = null;
+    } else if (scanStopRef.current) {
+      // Limpar ref mesmo se não estiver escaneando
       scanStopRef.current = null;
     }
     if (isMountedRef.current) {
       setIsScanningDevices(false);
+      isScanningRef.current = false;
     }
   }, []);
 
@@ -422,20 +429,6 @@ export const HomeWip: React.FC<Props> = ({
         return;
       }
 
-      // Se já estiver escaneando, parar antes de iniciar novo (igual ao BluetoothConnectionScreen)
-      if (isScanningRef.current) {
-        console.log('[BLE] Scan já está em andamento, parando antes de iniciar novo...');
-        try {
-          manager.stopDeviceScan();
-        } catch (error) {
-          console.warn('[BLE] Erro ao parar scan anterior:', error);
-        }
-        cleanupScan();
-        setIsScanningDevices(false);
-        // Aguardar um pouco antes de iniciar novo scan
-        await new Promise<void>(resolve => setTimeout(() => resolve(), 200));
-      }
-
       // Verificar permissões
       const hasPermissions = await checkBluetoothPermissions();
       if (!hasPermissions) {
@@ -488,8 +481,28 @@ export const HomeWip: React.FC<Props> = ({
         return;
       }
 
-      // Parar scan anterior se houver
-      cleanupScan();
+      // Se já está escaneando, parar antes de iniciar novo (igual ao BluetoothConnectionScreen)
+      // Mas apenas se realmente estiver escaneando - verificar tentando parar primeiro
+      if (isScanningRef.current) {
+        console.log('[BLE] Scan anterior detectado, parando antes de iniciar novo...');
+        try {
+          manager.stopDeviceScan();
+        } catch (error) {
+          console.warn('[BLE] Erro ao parar scan anterior:', error);
+        }
+        // Limpar refs e estado sem chamar cleanupScan (que poderia interferir)
+        isScanningRef.current = false;
+        setIsScanningDevices(false);
+        if (scanTimeoutRef.current) {
+          clearTimeout(scanTimeoutRef.current);
+          scanTimeoutRef.current = null;
+        }
+        if (scanStopRef.current) {
+          scanStopRef.current = null;
+        }
+        // Aguardar um pouco antes de iniciar novo scan (igual ao BluetoothConnectionScreen)
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 300));
+      }
       
       // Limpar timeout anterior se houver
       if (scanTimeoutRef.current) {
@@ -498,20 +511,51 @@ export const HomeWip: React.FC<Props> = ({
       }
       
       // Limpar dispositivos e iniciar scan (igual ao BluetoothConnectionScreen)
-      devicesMapRef.current.clear();
-      setBluetoothDevices([]);
+      // Não limpar lista se houver dispositivo conectado (igual ao BluetoothConnectionScreen)
+      const currentlyConnected = connectedDevice;
+      if (!currentlyConnected) {
+        devicesMapRef.current.clear();
+        setBluetoothDevices([]);
+      }
+
+      // Definir estado de scanning ANTES de iniciar o scan (igual ao BluetoothConnectionScreen)
+      setIsScanningDevices(true);
+      isScanningRef.current = true;
       setBluetoothInfoMessage('Buscando dispositivos...');
       setBluetoothErrorMessage(null);
       setBluetoothPopupMode('devices');
       setBluetoothPopupVisible(true);
-      
-      // Definir estado de scanning ANTES de iniciar o scan
-      setIsScanningDevices(true);
-      isScanningRef.current = true;
 
-      // Função para parar scan
+      // Garantir que não exista timeout antigo pendurado (igual ao BluetoothConnectionScreen)
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = null;
+      }
+
+      // Timeout automático do scan (10 segundos, igual ao BluetoothConnectionScreen)
+      scanTimeoutRef.current = setTimeout(() => {
+        console.log('[BLE] Scan parado automaticamente por timeout (10s)');
+        logUserAction('bluetooth_scan_timeout', { duration: 10000 });
+        
+        try {
+          manager.stopDeviceScan();
+        } catch (e: any) {
+          console.warn('[BLE] Erro ao parar scan no timeout:', e);
+        }
+
+        if (isMountedRef.current) {
+          setIsScanningDevices(false);
+          setBluetoothInfoMessage(null);
+          isScanningRef.current = false;
+        }
+
+        scanTimeoutRef.current = null;
+      }, 10000); // 10.000 ms = 10s
+
+      // Função para parar scan (criada após timeout para não interferir)
       const stopScan = () => {
-        console.log('[BLE] Parando scan...');
+        console.log('[BLE] Parando scan via stopScan()...');
+        console.log('[BLE] isScanningRef.current antes de parar:', isScanningRef.current);
         isScanningRef.current = false;
         try {
           manager.stopDeviceScan();
@@ -529,35 +573,14 @@ export const HomeWip: React.FC<Props> = ({
         }
       };
 
-      scanStopRef.current = stopScan;
-      
-      // Timeout automático do scan (10 segundos, igual ao BluetoothConnectionScreen)
-      scanTimeoutRef.current = setTimeout(() => {
-        console.log('[BLE] Scan parado automaticamente por timeout (10s)');
-        logUserAction('bluetooth_scan_timeout', { duration: 10000 });
-        
-        try {
-          manager.stopDeviceScan();
-        } catch (e: any) {
-          console.warn('Erro ao parar scan no timeout:', e);
-        }
-
-        if (isMountedRef.current) {
-          setIsScanningDevices(false);
-          setBluetoothInfoMessage(null);
-          // Limpar o ref também
-          isScanningRef.current = false;
-          if (scanStopRef.current) {
-            scanStopRef.current = null;
-          }
-        }
-
-        scanTimeoutRef.current = null;
-      }, 10000); // 10.000 ms = 10s
+      // Não definir scanStopRef antes de iniciar o scan para evitar conflitos
+      // Vai ser definido após o scan ser iniciado com sucesso
 
       // Iniciar scan (exatamente igual ao BluetoothConnectionScreen)
       try {
         console.log('[BLE] Iniciando scan de dispositivos...');
+        console.log('[BLE] isScanningRef.current antes de iniciar:', isScanningRef.current);
+        console.log('[BLE] scanStopRef.current antes de iniciar:', !!scanStopRef.current);
         logUserAction('bluetooth_scan_starting', {});
         
         manager.startDeviceScan(null, null, (error: BleError | null, device: Device | null) => {
@@ -654,11 +677,16 @@ export const HomeWip: React.FC<Props> = ({
         });
 
         console.log('[BLE] Scan iniciado com sucesso');
+        console.log('[BLE] isScanningRef.current após iniciar:', isScanningRef.current);
         logUserAction('bluetooth_scan_started', {});
+        
+        // Definir scanStopRef APÓS o scan ser iniciado com sucesso
+        scanStopRef.current = stopScan;
         
         // Garantir que o estado de scanning está correto após iniciar
         if (isMountedRef.current) {
           setIsScanningDevices(true);
+          isScanningRef.current = true; // Garantir que está true
         }
       } catch (error: any) {
         console.error('[BLE] ERRO ao iniciar scan:', error);
@@ -727,9 +755,11 @@ export const HomeWip: React.FC<Props> = ({
                 (state: BleState) => {
                   if (!isMountedRef.current) return;
                   
+                  console.log('[BLE] Estado do Bluetooth mudou para:', state);
                   logUserAction('bluetooth_state_changed', { state });
                   
                   if (state === 'PoweredOff') {
+                    console.log('[BLE] Bluetooth desligado, parando scan...');
                     // Parar scan se o Bluetooth for desligado
                     if (isScanningRef.current) {
                       setIsScanningDevices(false);
@@ -742,6 +772,8 @@ export const HomeWip: React.FC<Props> = ({
                       setBluetoothPopupMode('error');
                       setBluetoothPopupVisible(true);
                     }
+                  } else if (state === 'PoweredOn') {
+                    console.log('[BLE] Bluetooth ligado, mas não iniciando scan aqui (já foi iniciado)');
                   }
                 },
                 true,
@@ -760,9 +792,11 @@ export const HomeWip: React.FC<Props> = ({
                   (state: BleState) => {
                     if (!isMountedRef.current) return;
                     
+                    console.log('[BLE] Estado do Bluetooth mudou para:', state);
                     logUserAction('bluetooth_state_changed', { state });
                     
                     if (state === 'PoweredOff') {
+                      console.log('[BLE] Bluetooth desligado, parando scan...');
                       // Parar scan se o Bluetooth for desligado
                       if (isScanningRef.current) {
                         setIsScanningDevices(false);
@@ -775,6 +809,8 @@ export const HomeWip: React.FC<Props> = ({
                         setBluetoothPopupMode('error');
                         setBluetoothPopupVisible(true);
                       }
+                    } else if (state === 'PoweredOn') {
+                      console.log('[BLE] Bluetooth ligado, mas não iniciando scan aqui (já foi iniciado)');
                     }
                   },
                   false,
