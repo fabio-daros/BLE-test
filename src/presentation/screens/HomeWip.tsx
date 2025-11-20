@@ -850,13 +850,17 @@ export const HomeWip: React.FC<Props> = ({
             }
           }
           
-          // Verificar estado atual do Bluetooth e iniciar scan se estiver ligado
+          // Verificar estado atual do Bluetooth
           const currentState = await manager.state();
           
           if (currentState === 'PoweredOn') {
-            // Bluetooth está ligado - iniciar scan automaticamente
+            // Bluetooth está ligado - apenas mudar para modo 'devices' e mostrar popup
+            // O scan será iniciado apenas quando o usuário clicar em 'Atualizar lista'
             logUserAction('bluetooth_already_enabled', { state: currentState });
-            await startBluetoothScan({ autoOpenSettingsOnPowerOff: false });
+            setBluetoothPopupMode('devices');
+            setBluetoothPopupVisible(true);
+            setBluetoothInfoMessage(null);
+            setBluetoothErrorMessage(null);
           } else {
             // Bluetooth não está ligado - mostrar erro
             setBluetoothErrorMessage(
@@ -867,8 +871,11 @@ export const HomeWip: React.FC<Props> = ({
           }
         } catch (error: any) {
           logUserAction('bluetooth_state_check_error', { error: error?.message });
-          // Mesmo em caso de erro ao verificar estado, tentar iniciar scan
-          await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
+          // Em caso de erro, apenas mostrar popup em modo 'devices'
+          setBluetoothPopupMode('devices');
+          setBluetoothPopupVisible(true);
+          setBluetoothInfoMessage(null);
+          setBluetoothErrorMessage(null);
         }
       } else {
         setBluetoothErrorMessage(
@@ -922,48 +929,77 @@ export const HomeWip: React.FC<Props> = ({
   }, [cleanupScan, connectingDeviceId, isRequestingBluetooth]);
 
   const handleRefreshDeviceList = useCallback(async () => {
+    // Seguir exatamente a lógica do botão 'Escanear Dispositivos' do BluetoothConnectionScreen
     if (connectingDeviceId) {
       return;
     }
     
-    console.log('[BLE] Atualizando lista de dispositivos...');
+    console.log('[BLE] === Iniciando refresh de dispositivos ===');
     logUserAction('bluetooth_refresh_device_list', {});
     
-    // Limpar lista e mensagens imediatamente
-    setBluetoothDevices([]);
-    setBluetoothInfoMessage(null);
-    setBluetoothErrorMessage(null);
+    const manager = bleManagerRef.current;
+    if (!manager) {
+      setBluetoothErrorMessage(
+        'O módulo de Bluetooth não está disponível neste ambiente.'
+      );
+      setBluetoothPopupMode('error');
+      setBluetoothPopupVisible(true);
+      return;
+    }
     
-    // Limpar mapa de dispositivos para começar do zero
-    devicesMapRef.current.clear();
+    // Verificar estado do Bluetooth (igual ao BluetoothConnectionScreen linha 550-554)
+    try {
+      const state = await manager.state();
+      if (state !== 'PoweredOn') {
+        setBluetoothErrorMessage(
+          'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
+        );
+        setBluetoothPopupMode('error');
+        setBluetoothPopupVisible(true);
+        return;
+      }
+    } catch (error: any) {
+      console.error('[BLE] Erro ao verificar estado do Bluetooth:', error);
+      setBluetoothErrorMessage(
+        `Erro ao verificar estado do Bluetooth: ${error?.message || 'Erro desconhecido'}`
+      );
+      setBluetoothPopupMode('error');
+      setBluetoothPopupVisible(true);
+      return;
+    }
     
-    // Parar qualquer scan em andamento antes de iniciar um novo (igual ao BluetoothConnectionScreen)
-    if (isScanningRef.current && bleManagerRef.current) {
+    // Se já está escaneando, esse clique serve para PARAR manualmente (igual ao BluetoothConnectionScreen linha 557-573)
+    if (isScanningRef.current) {
       try {
-        console.log('[BLE] Parando scan anterior antes de atualizar...');
-        bleManagerRef.current.stopDeviceScan();
-      } catch (error) {
-        console.warn('[BLE] Erro ao parar scan anterior:', error);
+        manager.stopDeviceScan();
+        setIsScanningDevices(false);
+        isScanningRef.current = false;
+        console.log('[BLE] Scan parado manualmente pelo usuário.');
+        logUserAction('bluetooth_scan_stopped_manually', {});
+        
+        // Limpar timeout
+        if (scanTimeoutRef.current) {
+          clearTimeout(scanTimeoutRef.current);
+          scanTimeoutRef.current = null;
+        }
+        if (scanStopRef.current) {
+          scanStopRef.current = null;
+        }
+        
+        setBluetoothInfoMessage(null);
+        return;
+      } catch (e: any) {
+        console.warn(`[BLE] Erro ao parar scan: ${e?.message || String(e)}`);
       }
     }
     
-    if (scanStopRef.current) {
-      scanStopRef.current();
-      scanStopRef.current = null;
-    }
-    
-    // Limpar timeout anterior
-    if (scanTimeoutRef.current) {
-      clearTimeout(scanTimeoutRef.current);
-      scanTimeoutRef.current = null;
-    }
-    
-    // Pequeno delay para garantir que o scan anterior foi parado (igual ao BluetoothConnectionScreen)
-    await new Promise<void>(resolve => setTimeout(() => resolve(), 200));
-    
-    // Iniciar novo scan
-    await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
-  }, [connectingDeviceId, startBluetoothScan, logUserAction]);
+    // Iniciar novo scan (igual ao BluetoothConnectionScreen linha 575-705)
+    await startBluetoothScan({ autoOpenSettingsOnPowerOff: false });
+  }, [
+    connectingDeviceId,
+    startBluetoothScan,
+    logUserAction,
+  ]);
 
   const handleSelectBluetoothDevice = useCallback(
     async (deviceId: string) => {

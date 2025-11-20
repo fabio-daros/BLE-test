@@ -18,21 +18,6 @@
   "logcatMessages": [
     {
       "header": {
-        "logLevel": "INFO",
-        "pid": 955,
-        "tid": 955,
-        "applicationId": "surfaceflinger",
-        "processName": "surfaceflinger",
-        "tag": "chatty",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 86000000
-        }
-      },
-      "message": "uid\u003d1000(system) /system/bin/surfaceflinger identical 2 lines"
-    },
-    {
-      "header": {
         "logLevel": "ERROR",
         "pid": 955,
         "tid": 955,
@@ -495,111 +480,6 @@
         }
       },
       "message": "[INFO:gatt_api.cc(979)] allocated gatt_if\u003d9"
-    },
-    {
-      "header": {
-        "logLevel": "VERBOSE",
-        "pid": 2356,
-        "tid": 3024,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "bt_stack",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 225000000
-        }
-      },
-      "message": "[VERBOSE1:gatt_api.cc(1089)] GATT_StartIf gatt_if\u003d9"
-    },
-    {
-      "header": {
-        "logLevel": "VERBOSE",
-        "pid": 2356,
-        "tid": 3024,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "bt_stack",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 225000000
-        }
-      },
-      "message": "[VERBOSE1:gatt_utils.cc(254)] gatt_find_the_connected_bda start_idx\u003d0"
-    },
-    {
-      "header": {
-        "logLevel": "VERBOSE",
-        "pid": 2356,
-        "tid": 3024,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "bt_stack",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 226000000
-        }
-      },
-      "message": "[VERBOSE1:gatt_utils.cc(266)]  found\u003d0 found_idx\u003d7"
-    },
-    {
-      "header": {
-        "logLevel": "DEBUG",
-        "pid": 2356,
-        "tid": 2468,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "BtGatt.GattService",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 226000000
-        }
-      },
-      "message": "onScannerRegistered() - UUID\u003d4b7138fb-728e-427a-8347-8e381acdba2e, scannerId\u003d9, status\u003d0"
-    },
-    {
-      "header": {
-        "logLevel": "DEBUG",
-        "pid": 14709,
-        "tid": 14733,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "BluetoothLeScanner",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 226000000
-        }
-      },
-      "message": "onScannerRegistered() - status\u003d0 scannerId\u003d9 mScannerId\u003d0"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 1692,
-        "tid": 2190,
-        "applicationId": "system_server",
-        "processName": "system_server",
-        "tag": "SensorService",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 227000000
-        }
-      },
-      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 1692,
-        "tid": 2190,
-        "applicationId": "system_server",
-        "processName": "system_server",
-        "tag": "SensorService",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 227000000
-        }
-      },
-      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
     }
   ]
 }
