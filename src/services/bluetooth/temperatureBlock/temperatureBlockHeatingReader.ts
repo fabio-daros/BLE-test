@@ -33,19 +33,6 @@ export async function readTemperatureBlockHeatingTime(
         const base64Value = characteristic.value;
         const bytes = base64ToBytes(base64Value);
         
-        // Converte bytes para ArrayBuffer e lê como float32 big-endian
-        const buffer = new ArrayBuffer(bytes.length);
-        const view = new DataView(buffer);
-        bytes.forEach((byte, index) => {
-          view.setUint8(index, byte);
-        });
-        
-        // Lê como float32 big-endian (false = big-endian)
-        const floatBigEndian = view.getFloat32(0, false);
-        
-        // Lê como float32 little-endian para comparação (true = little-endian)
-        const floatLittleEndian = view.getFloat32(0, true);
-        
         // Formata bytes em hex
         const bytesHex = bytes.map(b => `0x${b.toString(16).padStart(2, '0')}`).join(' ');
         const bytesArray = `[${bytes.map(b => b.toString()).join(', ')}]`;
@@ -53,9 +40,29 @@ export async function readTemperatureBlockHeatingTime(
         console.log('[DEBUG Hardware - Tempo Aquecimento] Base64 recebido:', base64Value);
         console.log('[DEBUG Hardware - Tempo Aquecimento] Bytes decodificados:', bytesArray);
         console.log('[DEBUG Hardware - Tempo Aquecimento] Bytes em hex:', bytesHex);
-        console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 BIG-ENDIAN:', floatBigEndian);
-        console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 LITTLE-ENDIAN (comparação):', floatLittleEndian);
-        console.log('[DEBUG Hardware - Tempo Aquecimento] Valor (big-endian):', floatBigEndian.toFixed(2));
+        console.log('[DEBUG Hardware - Tempo Aquecimento] Tamanho do buffer:', bytes.length, 'bytes');
+        
+        // Só tenta ler como float32 se tiver pelo menos 4 bytes
+        if (bytes.length >= 4) {
+          // Converte bytes para ArrayBuffer e lê como float32 big-endian
+          const buffer = new ArrayBuffer(bytes.length);
+          const view = new DataView(buffer);
+          bytes.forEach((byte, index) => {
+            view.setUint8(index, byte);
+          });
+          
+          // Lê como float32 big-endian (false = big-endian)
+          const floatBigEndian = view.getFloat32(0, false);
+          
+          // Lê como float32 little-endian para comparação (true = little-endian)
+          const floatLittleEndian = view.getFloat32(0, true);
+          
+          console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 BIG-ENDIAN:', floatBigEndian);
+          console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 LITTLE-ENDIAN (comparação):', floatLittleEndian);
+          console.log('[DEBUG Hardware - Tempo Aquecimento] Valor (big-endian):', floatBigEndian.toFixed(2));
+        } else {
+          console.log('[DEBUG Hardware - Tempo Aquecimento] Buffer muito pequeno para float32 (precisa de 4 bytes, recebeu', bytes.length, ')');
+        }
       }
       
     } catch (readError: any) {
