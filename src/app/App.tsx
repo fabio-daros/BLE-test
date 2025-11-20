@@ -265,6 +265,19 @@ export const App: React.FC = () => {
   //   return Promise.resolve();
   // };
 
+  const handleNavigateToHomeDirect = () => {
+    logger.info(
+      'Navegando diretamente para HomeWip (desenvolvimento)',
+      {
+        from: currentState,
+        to: 'homewip',
+        trigger: 'direct_navigation_button',
+      },
+      'navigation'
+    );
+    setCurrentState('homewip');
+  };
+
   const handleNavigateToHome = async (userData?: {
     displayName?: string;
     email?: string;
@@ -991,6 +1004,7 @@ export const App: React.FC = () => {
             onLoginGoogle={handleNavigateToGoogleLogin}
             onRegister={handleNavigateToCreateAccount}
             onAccessAdminPanel={handleAccessAdminPanel}
+            onNavigateToHome={handleNavigateToHomeDirect}
           />
         );
 

@@ -535,8 +535,20 @@ export const HomeWip: React.FC<Props> = ({
     }
   }, [onNavigateToBluetooth, logUserAction]);
 
-  // Removido useEffect que abria modal automaticamente
-  // A modal só deve aparecer quando o usuário clicar no botão de Bluetooth
+  // Mostrar popup automaticamente ao entrar na tela
+  useEffect(() => {
+    if (bleManagerInitChecked && !isBluetoothPopupVisible) {
+      // Aguardar um pouco para garantir que a tela foi renderizada
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          setBluetoothPopupMode('request');
+          setBluetoothPopupVisible(true);
+          logUserAction('bluetooth_permission_popup_shown_on_mount');
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [bleManagerInitChecked, isBluetoothPopupVisible, logUserAction]);
 
   const handleBluetoothPermission = useCallback(async () => {
     if (isRequestingBluetooth) {
