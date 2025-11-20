@@ -549,7 +549,11 @@ export const HomeWip: React.FC<Props> = ({
         console.log('[BLE] Iniciando scan de dispositivos...');
         logUserAction('bluetooth_scan_starting', {});
         
-        manager.startDeviceScan(null, null, (error: BleError | null, device: Device | null) => {
+        // Usar exatamente os mesmos parâmetros do BluetoothConnectionScreen
+        manager.startDeviceScan(null, null, (error, device) => {
+          // Log para debug - verificar se o callback está sendo chamado
+          console.log('[BLE] === CALLBACK CHAMADO ===', 'error:', error ? 'SIM' : 'NÃO', 'device:', device ? 'SIM' : 'NÃO');
+          
           if (error) {
             const msg = (error as any)?.message || 'Erro desconhecido';
             const code = (error as any)?.errorCode || 'N/A';
@@ -583,15 +587,25 @@ export const HomeWip: React.FC<Props> = ({
             return;
           }
 
+          // Log para debug - verificar se o callback está sendo chamado
+          console.log('[BLE] CALLBACK CHAMADO - device:', device ? 'presente' : 'null', 'error:', error ? 'presente' : 'null');
+          
           if (!device || !isMountedRef.current) {
+            if (!device) {
+              console.log('[BLE] Device é null, retornando');
+            }
+            if (!isMountedRef.current) {
+              console.log('[BLE] Componente não está montado, retornando');
+            }
             return;
           }
 
           // Filtrar apenas dispositivos que contenham "InPunto" no nome (igual ao BluetoothConnectionScreen linha 661-664)
           const name = (device.name || '').trim();
-          console.log('[BLE] Dispositivo encontrado no scan:', name || '(sem nome)', 'ID:', device.id);
+          console.log('[BLE] Dispositivo encontrado no scan:', name || '(sem nome)', 'ID:', device.id, 'RSSI:', device.rssi);
           
           if (!name.includes('InPunto')) {
+            console.log('[BLE] Dispositivo não contém "InPunto" no nome, ignorando:', name);
             return;
           }
 
