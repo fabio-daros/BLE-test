@@ -157,14 +157,11 @@ export const HomeWip: React.FC<Props> = ({
 
     return () => {
       clearTimeout(showPopupTimer);
-      isMountedRef.current = false;
-      hasInitialPopupShownRef.current = false;
       
-      // Limpar timeout de sucesso se existir
-      if (successTimeoutRef.current) {
-        clearTimeout(successTimeoutRef.current);
-        successTimeoutRef.current = null;
-      }
+      // IMPORTANTE: Só limpar successTimeoutRef no unmount real do componente,
+      // não quando o useEffect roda novamente devido a mudanças de estado
+      // O successTimeoutRef só deve ser limpo quando o componente for desmontado
+      // ou quando for explicitamente cancelado (ex: nova conexão)
       
       // Remover listener de estado do Bluetooth (igual ao BluetoothConnectionScreen)
       try {
@@ -185,22 +182,37 @@ export const HomeWip: React.FC<Props> = ({
         // ignora
       }
       
-      // Limpar timeouts
+      // Limpar timeouts de scan (mas não successTimeoutRef aqui)
       if (scanTimeoutRef.current) {
         clearTimeout(scanTimeoutRef.current);
         scanTimeoutRef.current = null;
       }
       
-      if (successTimeoutRef.current) {
-        clearTimeout(successTimeoutRef.current);
-        successTimeoutRef.current = null;
-      }
-      
       if (scanStopRef.current) {
         scanStopRef.current = null;
       }
+      
+      // Só limpar successTimeoutRef e marcar como desmontado no unmount real
+      // Isso é feito em um useEffect separado com dependências vazias []
     };
-  }, [isBluetoothPopupVisible, connectedDevice, logUserAction]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBluetoothPopupVisible, logUserAction]);
+
+  // useEffect separado para cleanup apenas no unmount real
+  useEffect(() => {
+    return () => {
+      console.log('[BLE] Componente desmontando, limpando tudo...');
+      isMountedRef.current = false;
+      hasInitialPopupShownRef.current = false;
+      
+      // Limpar timeout de sucesso apenas no unmount real
+      if (successTimeoutRef.current) {
+        console.log('[BLE] Limpando successTimeoutRef no unmount');
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+    };
+  }, []); // Array vazio = apenas no mount/unmount
 
 
   // ensureIntentLauncherLoaded removido - usando react-native-intent-launcher ou Linking diretamente
@@ -1043,7 +1055,7 @@ export const HomeWip: React.FC<Props> = ({
         }
 
         const bleDevice = await manager.connectToDevice(deviceId, {
-          timeout: 15000,
+          timeout: 10000,
         });
         await bleDevice.discoverAllServicesAndCharacteristics();
 
@@ -1067,12 +1079,19 @@ export const HomeWip: React.FC<Props> = ({
         setConnectingDeviceId(null);
 
         // Aguardar 300ms e fechar o popup (mantendo a conexão ativa)
+        // IMPORTANTE: Limpar qualquer timeout anterior ANTES de setar connectedDevice
+        // para evitar que o useEffect cleanup limpe este timeout
         if (successTimeoutRef.current) {
           clearTimeout(successTimeoutRef.current);
+          successTimeoutRef.current = null;
         }
         
         console.log('[BLE] Agendando fechamento do popup em 300ms...');
-        successTimeoutRef.current = setTimeout(() => {
+        
+        // Agendar o fechamento do popup ANTES de setar connectedDevice
+        // para evitar que o useEffect seja executado e limpe o timeout
+        const timeoutId = setTimeout(() => {
+          console.log('[BLE] Executando timeout de fechamento do popup...');
           if (!isMountedRef.current) {
             console.log('[BLE] Componente não montado, não fechando popup');
             return;
@@ -1085,6 +1104,9 @@ export const HomeWip: React.FC<Props> = ({
           // Manter connectedDevice ativo para uso nas próximas telas
           console.log('[BLE] Popup fechado, conexão mantida ativa');
         }, 300);
+        
+        // Armazenar o timeout ID no ref
+        successTimeoutRef.current = timeoutId;
       } catch (error) {
         if (!isMountedRef.current) {
           return;
