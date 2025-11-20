@@ -121,14 +121,29 @@ export const HomeWip: React.FC<Props> = ({
     setBleManagerInitChecked(true);
 
     // Mostrar popup automaticamente após inicializar (apenas uma vez)
+    // Só mostrar se o popup ainda não estiver visível ou se não foi mostrado antes
     const showPopupTimer = setTimeout(() => {
-      if (isMountedRef.current && !hasInitialPopupShownRef.current) {
-        setBluetoothPopupMode('request');
+      // Verificar se ainda deve mostrar o popup inicial
+      // Não mostrar se:
+      // 1. Componente foi desmontado
+      // 2. Popup inicial já foi mostrado/interagido
+      // 3. Popup já está visível (pode estar em outro modo)
+      if (isMountedRef.current && !hasInitialPopupShownRef.current && !isBluetoothPopupVisible) {
+        // Verificar o modo atual antes de definir
+        setBluetoothPopupMode(currentMode => {
+          // Se o popup já estiver em modo 'devices' ou 'error', não resetar
+          if (currentMode === 'devices' || currentMode === 'error') {
+            hasInitialPopupShownRef.current = true;
+            return currentMode;
+          }
+          // Caso contrário, definir como 'request'
+          hasInitialPopupShownRef.current = true;
+          logUserAction('bluetooth_permission_popup_shown_on_init');
+          return 'request';
+        });
         setBluetoothErrorMessage(null);
         setBluetoothInfoMessage(null);
         setBluetoothPopupVisible(true);
-        hasInitialPopupShownRef.current = true;
-        logUserAction('bluetooth_permission_popup_shown_on_init');
       }
     }, 800);
 
@@ -560,6 +575,8 @@ export const HomeWip: React.FC<Props> = ({
       return;
     }
 
+    // Marcar que o popup inicial já foi interagido para evitar que o timer o reset
+    hasInitialPopupShownRef.current = true;
     setIsRequestingBluetooth(true);
 
     const granted = await requestBluetoothPermissions();
