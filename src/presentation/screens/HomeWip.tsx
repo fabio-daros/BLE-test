@@ -547,7 +547,18 @@ export const HomeWip: React.FC<Props> = ({
       // Iniciar scan (exatamente igual ao BluetoothConnectionScreen linha 637-691)
       try {
         console.log('[BLE] Iniciando scan de dispositivos...');
+        console.log('[BLE] Manager:', manager ? 'OK' : 'NULL');
         logUserAction('bluetooth_scan_starting', {});
+        
+        // IMPORTANTE: garantir que não há scan anterior ativo antes de iniciar novo
+        try {
+          manager.stopDeviceScan();
+          console.log('[BLE] Parando qualquer scan anterior antes de iniciar novo');
+          // Pequeno delay para garantir que o scan anterior foi parado
+          await new Promise<void>(resolve => setTimeout(() => resolve(), 100));
+        } catch (e) {
+          // Ignorar se não houver scan ativo
+        }
         
         // Usar exatamente os mesmos parâmetros do BluetoothConnectionScreen
         manager.startDeviceScan(null, null, (error, device) => {
@@ -656,6 +667,8 @@ export const HomeWip: React.FC<Props> = ({
           });
         });
 
+        // Log ANTES do try-catch terminar para garantir que startDeviceScan foi chamado
+        console.log('[BLE] startDeviceScan chamado, aguardando callbacks...');
         console.log('[BLE] Scan iniciado com sucesso');
         logUserAction('bluetooth_scan_started', {});
       } catch (error: any) {
