@@ -85,6 +85,7 @@ export const HomeWip: React.FC<Props> = ({
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const devicesMapRef = useRef(new Map<string, BluetoothDevice>());
   const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bluetoothStateSubscriptionRef = useRef<Subscription | null>(null);
   const isMountedRef = useRef(true);
   const isScanningRef = useRef(false);
   const scanStartAttemptRef = useRef(false);
@@ -152,6 +153,26 @@ export const HomeWip: React.FC<Props> = ({
       clearTimeout(showPopupTimer);
       isMountedRef.current = false;
       hasInitialPopupShownRef.current = false;
+      
+      // Remover listener de estado do Bluetooth (igual ao BluetoothConnectionScreen)
+      try {
+        if (bluetoothStateSubscriptionRef.current) {
+          bluetoothStateSubscriptionRef.current.remove();
+          bluetoothStateSubscriptionRef.current = null;
+        }
+      } catch (e: any) {
+        console.warn('[BLE] Erro ao remover subscription:', e);
+      }
+      
+      // Parar scan no unmount (igual ao BluetoothConnectionScreen)
+      try {
+        if (bleManagerRef.current) {
+          bleManagerRef.current.stopDeviceScan();
+        }
+      } catch {
+        // ignora
+      }
+      
       if (successTimeoutRef.current) {
         clearTimeout(successTimeoutRef.current);
         successTimeoutRef.current = null;
@@ -203,31 +224,8 @@ export const HomeWip: React.FC<Props> = ({
     }
   }, []);
 
-  // Monitorar estado do Bluetooth (igual ao app de referência)
-  useEffect(() => {
-    if (!bleManagerRef.current) {
-      return;
-    }
-
-    const manager = bleManagerRef.current;
-    const subscription = manager.onStateChange((state: BleState) => {
-      if (state === 'PoweredOff') {
-        // Parar scan se o Bluetooth for desligado
-        setIsScanningDevices(false);
-        cleanupScan();
-        if (isMountedRef.current) {
-          setBluetoothErrorMessage(
-            'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
-          );
-          setBluetoothPopupMode('error');
-        }
-      }
-    }, true);
-
-    return () => {
-      subscription.remove();
-    };
-  }, [cleanupScan]);
+  // Monitorar estado do Bluetooth - será registrado após conceder permissão
+  // O listener será registrado no handleBluetoothPermission
 
   const checkBluetoothPermissions = useCallback(async (): Promise<boolean> => {
     if (Platform.OS !== 'android') {
@@ -518,34 +516,36 @@ export const HomeWip: React.FC<Props> = ({
         scanTimeoutRef.current = null;
       }, 10000); // 10.000 ms = 10s
 
-      // Iniciar scan (adaptado do BluetoothConnectionScreen)
+      // Iniciar scan (exatamente igual ao BluetoothConnectionScreen)
       try {
         manager.startDeviceScan(null, null, (error: BleError | null, device: Device | null) => {
-          // Verificar se ainda estamos escaneando antes de processar
-          if (!isScanningRef.current) {
-            return;
-          }
-
           if (error) {
-            // Capturar erros específicos e tratar adequadamente
             const msg = (error as any)?.message || 'Erro desconhecido';
             const code = (error as any)?.errorCode || 'N/A';
+            const reason = (error as any)?.reason || 'N/A';
             
             logUserAction('bluetooth_scan_error', { 
               message: msg, 
-              code: String(code) 
+              code: String(code),
+              reason: String(reason)
             });
-
-            // Em caso de erro, parar scan e limpar timeout
-            stopScan();
+            
             if (isMountedRef.current) {
-              setBluetoothErrorMessage(`Erro ao buscar dispositivos: ${msg}`);
-              setBluetoothPopupMode('error');
+              setIsScanningDevices(false);
             }
+
+            // Em caso de erro, limpa timeout e para scan
+            if (scanTimeoutRef.current) {
+              clearTimeout(scanTimeoutRef.current);
+              scanTimeoutRef.current = null;
+            }
+            try {
+              manager.stopDeviceScan();
+            } catch { }
             return;
           }
 
-          if (!device || !device.id || !isMountedRef.current) {
+          if (!device || !isMountedRef.current) {
             return;
           }
 
@@ -555,42 +555,41 @@ export const HomeWip: React.FC<Props> = ({
             return;
           }
 
-          // Adicionar/atualizar dispositivo na lista
-          const bluetoothDevice: BluetoothDevice = {
+          // Atualizar lista diretamente (igual ao BluetoothConnectionScreen)
+          setBluetoothDevices(prev => {
+            const idx = prev.findIndex(d => d.id === device.id);
+            if (idx >= 0) {
+              // Atualizar dispositivo existente (igual ao BluetoothConnectionScreen linha 669-678)
+              const updated = [...prev];
+              const existing = updated[idx];
+              updated[idx] = {
+                id: device.id,
+                name: device.name || 'Equipamento sem nome',
+                rssi: device.rssi ?? null,
+                type: 'ble' as const,
+                ...(existing?.address && { address: existing.address }),
+              };
+              return updated;
+            }
+            // Adicionar novo dispositivo (igual ao BluetoothConnectionScreen linha 680-689)
+            return [
+              ...prev,
+              {
+                id: device.id,
+                name: device.name || 'Equipamento sem nome',
+                rssi: device.rssi ?? null,
+                type: 'ble' as const,
+              },
+            ];
+          });
+
+          // Atualizar mapa também
+          devicesMapRef.current.set(device.id, {
             id: device.id,
-            name: device.name || device.localName || 'Equipamento sem nome',
-            rssi: device.rssi !== undefined && device.rssi !== null ? device.rssi : null,
+            name: device.name || 'Equipamento sem nome',
+            rssi: device.rssi ?? null,
             type: 'ble',
-          };
-
-          // Atualizar mapa e lista (usando a mesma lógica do BluetoothConnectionScreen)
-          if (isMountedRef.current) {
-            setBluetoothDevices(prev => {
-              const idx = prev.findIndex(d => d.id === device.id);
-              
-              if (idx >= 0) {
-                // Atualizar dispositivo existente mantendo todas as propriedades
-                const existing = prev[idx];
-                const updated = [...prev];
-                updated[idx] = {
-                  id: bluetoothDevice.id,
-                  name: bluetoothDevice.name,
-                  rssi: bluetoothDevice.rssi !== undefined && bluetoothDevice.rssi !== null ? bluetoothDevice.rssi : null,
-                  type: bluetoothDevice.type,
-                  ...(existing?.address && { address: existing.address }),
-                };
-                return updated;
-              }
-              
-              // Adicionar novo dispositivo
-              return [...prev, bluetoothDevice].sort((a, b) =>
-                a.name.localeCompare(b.name)
-              );
-            });
-
-            // Atualizar mapa também
-            devicesMapRef.current.set(bluetoothDevice.id, bluetoothDevice);
-          }
+          });
         });
 
         logUserAction('bluetooth_scan_started');
@@ -646,9 +645,106 @@ export const HomeWip: React.FC<Props> = ({
       logUserAction('bluetooth_permission_granted');
       setIsRequestingBluetooth(false);
       
-      if (bleManagerAvailable) {
-        // Iniciar scan que já define o modo como 'devices' automaticamente
-        await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
+      if (bleManagerAvailable && bleManagerRef.current) {
+        const manager = bleManagerRef.current;
+        
+        // Verificar estado do Bluetooth (igual ao enableBluetooth do BluetoothConnectionScreen)
+        try {
+          // Registrar listener de estado do Bluetooth (igual ao BluetoothConnectionScreen)
+          if (!bluetoothStateSubscriptionRef.current) {
+            let subscription: Subscription | null = null;
+
+            try {
+              subscription = manager.onStateChange(
+                (state: BleState) => {
+                  if (!isMountedRef.current) return;
+                  
+                  logUserAction('bluetooth_state_changed', { state });
+                  
+                  if (state === 'PoweredOff') {
+                    // Parar scan se o Bluetooth for desligado
+                    if (isScanningRef.current) {
+                      setIsScanningDevices(false);
+                      cleanupScan();
+                    }
+                    if (isMountedRef.current) {
+                      setBluetoothErrorMessage(
+                        'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
+                      );
+                      setBluetoothPopupMode('error');
+                      setBluetoothPopupVisible(true);
+                    }
+                  }
+                },
+                true,
+              );
+              bluetoothStateSubscriptionRef.current = subscription;
+              logUserAction('bluetooth_state_listener_registered', { withInitialState: true });
+            } catch (error: any) {
+              console.warn(
+                '[BLE] Erro ao registrar listener com true, tentando com false:',
+                error,
+              );
+              logUserAction('bluetooth_state_listener_error', { error: error?.message });
+
+              try {
+                subscription = manager.onStateChange(
+                  (state: BleState) => {
+                    if (!isMountedRef.current) return;
+                    
+                    logUserAction('bluetooth_state_changed', { state });
+                    
+                    if (state === 'PoweredOff') {
+                      // Parar scan se o Bluetooth for desligado
+                      if (isScanningRef.current) {
+                        setIsScanningDevices(false);
+                        cleanupScan();
+                      }
+                      if (isMountedRef.current) {
+                        setBluetoothErrorMessage(
+                          'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
+                        );
+                        setBluetoothPopupMode('error');
+                        setBluetoothPopupVisible(true);
+                      }
+                    }
+                  },
+                  false,
+                );
+                bluetoothStateSubscriptionRef.current = subscription;
+                logUserAction('bluetooth_state_listener_registered', { withInitialState: false });
+              } catch (fallbackError: any) {
+                console.error(
+                  '[BLE] Erro ao registrar listener com false também:',
+                  fallbackError,
+                );
+                logUserAction('bluetooth_state_listener_critical_error', { 
+                  error: fallbackError?.message 
+                });
+              }
+            }
+          }
+          
+          // Verificar estado atual do Bluetooth e iniciar scan se estiver ligado
+          const currentState = await manager.state();
+          
+          if (currentState === 'PoweredOn') {
+            // Bluetooth está ligado - iniciar scan automaticamente
+            logUserAction('bluetooth_already_enabled', { state: currentState });
+            await startBluetoothScan({ autoOpenSettingsOnPowerOff: false });
+          } else {
+            // Bluetooth não está ligado - mostrar erro
+            setBluetoothErrorMessage(
+              'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
+            );
+            setBluetoothPopupMode('error');
+            setBluetoothPopupVisible(true);
+          }
+        } catch (error: any) {
+          logUserAction('bluetooth_state_check_error', { error: error?.message });
+          // Mesmo em caso de erro ao verificar estado, tentar iniciar scan
+          await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
+        }
       } else {
         setBluetoothErrorMessage(
           'O módulo de Bluetooth não está disponível neste ambiente.'
@@ -667,6 +763,7 @@ export const HomeWip: React.FC<Props> = ({
     isRequestingBluetooth,
     startBluetoothScan,
     requestBluetoothPermissions,
+    cleanupScan,
     logUserAction,
   ]);
 
