@@ -82,6 +82,7 @@ export const HomeWip: React.FC<Props> = ({
 
   const bleManagerRef = useRef<BleManager | null>(null);
   const scanStopRef = useRef<(() => void) | null>(null);
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const devicesMapRef = useRef(new Map<string, BluetoothDevice>());
   const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
@@ -189,6 +190,10 @@ export const HomeWip: React.FC<Props> = ({
   };
 
   const cleanupScan = useCallback(() => {
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+      scanTimeoutRef.current = null;
+    }
     if (scanStopRef.current) {
       scanStopRef.current();
       scanStopRef.current = null;
@@ -457,7 +462,13 @@ export const HomeWip: React.FC<Props> = ({
       // Parar scan anterior se houver
       cleanupScan();
       
-      // Limpar dispositivos e iniciar scan (igual ao app de referência)
+      // Limpar timeout anterior se houver
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = null;
+      }
+      
+      // Limpar dispositivos e iniciar scan (igual ao BluetoothConnectionScreen)
       devicesMapRef.current.clear();
       setBluetoothDevices([]);
       setIsScanningDevices(true);
@@ -474,13 +485,40 @@ export const HomeWip: React.FC<Props> = ({
         } catch (error) {
           // Ignorar erros ao parar scan
         }
-        setIsScanningDevices(false);
+        if (isMountedRef.current) {
+          setIsScanningDevices(false);
+        }
+        // Limpar timeout quando parar o scan
+        if (scanTimeoutRef.current) {
+          clearTimeout(scanTimeoutRef.current);
+          scanTimeoutRef.current = null;
+        }
       };
 
       scanStopRef.current = stopScan;
       isScanningRef.current = true;
 
-      // Iniciar scan (igual ao app de referência - simples e direto)
+      // Timeout automático do scan (10 segundos, igual ao BluetoothConnectionScreen)
+      scanTimeoutRef.current = setTimeout(() => {
+        try {
+          manager.stopDeviceScan();
+          logUserAction('bluetooth_scan_timeout', { duration: 10000 });
+        } catch (e: any) {
+          console.warn('Erro ao parar scan no timeout:', e);
+        }
+
+        if (isMountedRef.current) {
+          setIsScanningDevices(false);
+          if (bluetoothDevices.length === 0) {
+            setBluetoothInfoMessage(null);
+            // Não mostrar erro se não encontrou dispositivos, apenas parar de escanear
+          }
+        }
+
+        scanTimeoutRef.current = null;
+      }, 10000); // 10.000 ms = 10s
+
+      // Iniciar scan (adaptado do BluetoothConnectionScreen)
       try {
         manager.startDeviceScan(null, null, (error: BleError | null, device: Device | null) => {
           // Verificar se ainda estamos escaneando antes de processar
@@ -489,54 +527,77 @@ export const HomeWip: React.FC<Props> = ({
           }
 
           if (error) {
-            // Erro no scan - parar e mostrar mensagem
             // Capturar erros específicos e tratar adequadamente
-            const errorMessage = error.message || 'Erro ao buscar dispositivos Bluetooth.';
+            const msg = (error as any)?.message || 'Erro desconhecido';
+            const code = (error as any)?.errorCode || 'N/A';
             
-            // Ignorar erros comuns que não são críticos
-            if (error.errorCode === 600 && error.message?.includes('Unknown error')) {
-              // Erro desconhecido comum - logar mas não bloquear completamente
-              console.warn('BleError desconhecido capturado:', error);
-              // Não parar o scan completamente, apenas logar
-              return;
-            }
+            logUserAction('bluetooth_scan_error', { 
+              message: msg, 
+              code: String(code) 
+            });
 
-            // Outros erros - parar o scan
+            // Em caso de erro, parar scan e limpar timeout
             stopScan();
             if (isMountedRef.current) {
-              setBluetoothErrorMessage(errorMessage);
+              setBluetoothErrorMessage(`Erro ao buscar dispositivos: ${msg}`);
               setBluetoothPopupMode('error');
             }
             return;
           }
 
-          if (device && device.id && isMountedRef.current) {
-            // Adicionar/atualizar dispositivo na lista (igual ao app de referência)
-            const name = device.name?.trim() || 
-                        device.localName?.trim() || 
-                        'Equipamento sem nome';
-            
-            const bluetoothDevice: BluetoothDevice = {
-              id: device.id,
-              name,
-              rssi: device.rssi,
-              type: 'ble',
-            };
+          if (!device || !device.id || !isMountedRef.current) {
+            return;
+          }
 
-            // Atualizar mapa e lista (igual ao app de referência)
-            devicesMapRef.current.set(bluetoothDevice.id, bluetoothDevice);
+          // Filtrar apenas dispositivos que contenham "InPunto" no nome (igual ao BluetoothConnectionScreen)
+          const name = (device.name || '').trim();
+          if (!name.includes('InPunto')) {
+            return;
+          }
 
-            // Atualizar lista ordenada
-            setBluetoothDevices(
-              Array.from(devicesMapRef.current.values()).sort((a, b) =>
+          // Adicionar/atualizar dispositivo na lista
+          const bluetoothDevice: BluetoothDevice = {
+            id: device.id,
+            name: device.name || device.localName || 'Equipamento sem nome',
+            rssi: device.rssi !== undefined && device.rssi !== null ? device.rssi : null,
+            type: 'ble',
+          };
+
+          // Atualizar mapa e lista (usando a mesma lógica do BluetoothConnectionScreen)
+          if (isMountedRef.current) {
+            setBluetoothDevices(prev => {
+              const idx = prev.findIndex(d => d.id === device.id);
+              
+              if (idx >= 0) {
+                // Atualizar dispositivo existente mantendo todas as propriedades
+                const existing = prev[idx];
+                const updated = [...prev];
+                updated[idx] = {
+                  id: bluetoothDevice.id,
+                  name: bluetoothDevice.name,
+                  rssi: bluetoothDevice.rssi !== undefined && bluetoothDevice.rssi !== null ? bluetoothDevice.rssi : null,
+                  type: bluetoothDevice.type,
+                  ...(existing?.address && { address: existing.address }),
+                };
+                return updated;
+              }
+              
+              // Adicionar novo dispositivo
+              return [...prev, bluetoothDevice].sort((a, b) =>
                 a.name.localeCompare(b.name)
-              )
-            );
+              );
+            });
+
+            // Atualizar mapa também
+            devicesMapRef.current.set(bluetoothDevice.id, bluetoothDevice);
           }
         });
+
+        logUserAction('bluetooth_scan_started');
       } catch (error: any) {
         stopScan();
         const errorMessage = error?.message || 'Erro ao iniciar busca de dispositivos Bluetooth.';
+        logUserAction('bluetooth_scan_start_failed', { error: errorMessage });
         if (isMountedRef.current) {
           setBluetoothErrorMessage(errorMessage);
           setBluetoothPopupMode('error');
