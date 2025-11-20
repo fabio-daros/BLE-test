@@ -78,6 +78,7 @@ export const HomeWip: React.FC<Props> = ({
   >(null);
   const [bleManagerAvailable, setBleManagerAvailable] = useState(true);
   const [bleManagerInitChecked, setBleManagerInitChecked] = useState(false);
+  const hasShownInitialPopupRef = useRef(false);
 
   const bleManagerRef = useRef<BleManager | null>(null);
   const scanStopRef = useRef<(() => void) | null>(null);
@@ -537,18 +538,32 @@ export const HomeWip: React.FC<Props> = ({
 
   // Mostrar popup automaticamente ao entrar na tela
   useEffect(() => {
-    if (bleManagerInitChecked && !isBluetoothPopupVisible) {
-      // Aguardar um pouco para garantir que a tela foi renderizada
-      const timer = setTimeout(() => {
-        if (isMountedRef.current) {
-          setBluetoothPopupMode('request');
-          setBluetoothPopupVisible(true);
-          logUserAction('bluetooth_permission_popup_shown_on_mount');
-        }
-      }, 300);
-      return () => clearTimeout(timer);
+    if (!bleManagerInitChecked) {
+      return;
     }
-  }, [bleManagerInitChecked, isBluetoothPopupVisible, logUserAction]);
+
+    // Aguardar um pouco para garantir que a tela foi renderizada
+    const timer = setTimeout(() => {
+      if (isMountedRef.current && !hasShownInitialPopupRef.current) {
+        // Sempre mostrar o popup no modo 'request' ao entrar na tela
+        setBluetoothPopupMode('request');
+        setBluetoothErrorMessage(null);
+        setBluetoothInfoMessage(null);
+        setBluetoothPopupVisible(true);
+        hasShownInitialPopupRef.current = true;
+        logUserAction('bluetooth_permission_popup_shown_on_mount');
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [bleManagerInitChecked, logUserAction]);
+
+  // Resetar o flag quando o componente for desmontado para que apareça novamente na próxima montagem
+  useEffect(() => {
+    return () => {
+      hasShownInitialPopupRef.current = false;
+    };
+  }, []);
 
   const handleBluetoothPermission = useCallback(async () => {
     if (isRequestingBluetooth) {
