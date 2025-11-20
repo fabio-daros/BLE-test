@@ -1,4 +1,4 @@
-import { decode as atob, encode as btoa } from 'base-64';
+import { base64ToBytes, bytesToBase64 } from '../core/utils';
 
 // UUIDs do hardware conforme documentação
 export const PRE_TEST_SERVICE_UUID =
@@ -41,32 +41,8 @@ export interface PreTestFailureFlags {
   failedWellsMask: number;  // byte2 em hexa (poços com falha)
 }
 
-// --------- Helpers base64 <-> bytes ---------
-
-export function base64ToBytes(value: string | null | undefined): number[] {
-  if (!value) return [];
-  const binary = atob(value); // string binária
-  const len = binary.length;
-  const bytes = new Array<number>(len);
-
-  for (let i = 0; i < len; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return bytes;
-}
-
-export function bytesToBase64(bytes: ArrayLike<number>): string {
-  const len = bytes.length;
-  let binary = '';
-
-  for (let i = 0; i < len; i += 1) {
-    const v = bytes[i] as number; // non-null assertion
-    binary += String.fromCharCode(v);
-  }
-
-  return btoa(binary);
-}
+// Re-exportar utilitários para compatibilidade
+export { base64ToBytes, bytesToBase64 };
 
 // --------- Parsing do STATUS do pré-teste ---------
 
