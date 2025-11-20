@@ -561,23 +561,22 @@ export const HomeWip: React.FC<Props> = ({
     }
 
     setIsRequestingBluetooth(true);
-    setBluetoothPopupMode('request');
 
     const granted = await requestBluetoothPermissions();
 
     if (granted) {
       logUserAction('bluetooth_permission_granted');
       setIsRequestingBluetooth(false);
-      if (isMountedRef.current && bleManagerAvailable) {
-        setBluetoothPopupVisible(true);
-      }
+      
       if (bleManagerAvailable) {
+        // Iniciar scan que já define o modo como 'devices' automaticamente
         await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
       } else {
         setBluetoothErrorMessage(
           'O módulo de Bluetooth não está disponível neste ambiente.'
         );
         setBluetoothPopupMode('error');
+        setBluetoothPopupVisible(true);
       }
       return;
     }
