@@ -40,9 +40,7 @@ export async function readEquipmentStatus(
 
   const description = getEquipmentStatusDescription(status.status);
   onMessage(
-    `✅ Status do Equipamento: ${description} | ` +
-      `Hex: ${status.hexValue} | ` +
-      `Byte: 0x${status.rawByte.toString(16).padStart(2, '0')}`,
+    `📊 Status: ${description} | RAW: ${value} | Hex: ${status.hexValue}`,
   );
 
   return status.status;
@@ -68,8 +66,14 @@ export async function monitorEquipmentStatus(
     onUpdate: async (value) => {
       if (!value) return;
       const status = parseEquipmentStatusFromBase64(value);
-      if (status && onStatusUpdate) {
-        onStatusUpdate(status.status);
+      if (status) {
+        const description = getEquipmentStatusDescription(status.status);
+        onMessage(
+          `📊 Status: ${description} | RAW: ${value} | Hex: ${status.hexValue}`,
+        );
+        if (onStatusUpdate) {
+          onStatusUpdate(status.status);
+        }
       }
     },
     intervalMs,

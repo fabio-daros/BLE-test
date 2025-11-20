@@ -84,8 +84,14 @@ export async function monitorTemperatureBlock(
     onUpdate: async (value) => {
       if (!value) return;
       const status = parseTemperatureBlockFromBase64(value);
-      if (status && onTemperatureUpdate) {
-        onTemperatureUpdate(status.temperature);
+      if (status) {
+        const signStr = status.isPositive ? '+' : '-';
+        onMessage(
+          `📊 Temp: ${signStr}${status.temperature}°C | RAW: ${value} | Hex: ${status.hexValue}`,
+        );
+        if (onTemperatureUpdate) {
+          onTemperatureUpdate(status.temperature);
+        }
       }
     },
     intervalMs,
@@ -105,10 +111,6 @@ export async function attachTemperatureBlockMonitors(
   const stopFunctions: Array<() => void> = [];
 
   try {
-    onMessage('🚀 attachTemperatureBlockMonitors chamado!');
-    onMessage(`🔍 Service UUID: ${TEMPERATURE_BLOCK_SERVICE_UUID}`);
-    onMessage('=== Iniciando monitoramento da temperatura do bloco ===');
-
     // 1. Leitura inicial da temperatura (READ)
     await readTemperatureBlock(device, onMessage);
     
@@ -159,7 +161,7 @@ export async function attachTemperatureBlockMonitors(
       );
     }
 
-    onMessage('✅ Monitoramentos do bloco foram anexados');
+    // Monitoramentos iniciados
 
     return {
       stop: () => {

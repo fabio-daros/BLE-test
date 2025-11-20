@@ -70,9 +70,7 @@ export async function readCharacteristic(
       return null;
     }
 
-    if (onMessage) {
-      onMessage(`📖 Lendo característica (UUID: ${characteristicUuid})...`);
-    }
+    // Lendo característica silenciosamente
 
     let characteristic;
     try {

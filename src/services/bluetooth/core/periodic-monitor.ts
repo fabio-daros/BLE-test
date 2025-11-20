@@ -53,9 +53,7 @@ export async function createPeriodicMonitor(
   };
 
   try {
-    if (onMessage) {
-      onMessage(`🔔 Iniciando monitoramento periódico...`);
-    }
+    // Monitoramento periódico iniciado silenciosamente
 
     // Listener de desconexão para parar imediatamente
     disconnectSubscription = device.onDisconnected(() => {
@@ -106,9 +104,6 @@ export async function createPeriodicMonitor(
     // Configura leitura periódica apenas se ainda estiver monitorando
     if (isMonitoring) {
       intervalId = setInterval(readValue, intervalMs);
-      if (onMessage) {
-        onMessage(`✅ Monitoramento iniciado (lendo a cada ${intervalMs}ms)`);
-      }
     }
   } catch (error: any) {
     const errorMsg = error?.message || String(error);

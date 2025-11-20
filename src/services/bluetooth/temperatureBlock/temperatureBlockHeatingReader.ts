@@ -90,8 +90,13 @@ export async function monitorTemperatureBlockHeatingTime(
     onUpdate: async (value) => {
       if (!value) return;
       const status = parseHeatingTimeFromBase64(value);
-      if (status && onHeatingTimeUpdate) {
-        onHeatingTimeUpdate(status);
+      if (status) {
+        onMessage(
+          `📊 Aquecimento: ${status.hours}h${status.minutes.toString().padStart(2, '0')} (${status.totalMinutes}min) | RAW: ${value} | Hex: ${status.hexValue}`,
+        );
+        if (onHeatingTimeUpdate) {
+          onHeatingTimeUpdate(status);
+        }
       }
     },
     intervalMs,

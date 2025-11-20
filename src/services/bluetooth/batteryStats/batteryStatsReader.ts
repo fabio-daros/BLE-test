@@ -70,8 +70,13 @@ export async function monitorBatteryStatus(
     onUpdate: async (value) => {
       if (!value) return;
       const status = parseBatteryStatusFromBase64(value);
-      if (status && onBatteryUpdate) {
-        onBatteryUpdate(status.percentage);
+      if (status) {
+        onMessage(
+          `📊 Bateria: ${status.percentage}% | RAW: ${value} | Hex: ${status.hexValue}`,
+        );
+        if (onBatteryUpdate) {
+          onBatteryUpdate(status.percentage);
+        }
       }
     },
     intervalMs,
