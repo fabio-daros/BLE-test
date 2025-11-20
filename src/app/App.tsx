@@ -98,7 +98,7 @@ export const App: React.FC = () => {
     | 'pipettingInProgress'
     | 'sampleIdentification'
     | 'bluetoothConnection'
-  >('bluetoothConnection'); // 🧪 TESTE: Abrindo diretamente na tela de Bluetooth
+  >('login'); // Tela inicial: LoginScreenWip
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [phoneVerificationData, setPhoneVerificationData] = useState<{
     phoneNumber: string;
