@@ -44,6 +44,7 @@ export async function readTemperatureBlock(
         TEMPERATURE_BLOCK_SERVICE_UUID,
         TEMPERATURA_BLOCO_UUID,
       );
+      console.log('[Diego] characteristic', characteristic.value);
     } catch (readError: any) {
       // Se der erro na leitura, verifica se é erro de conexão
       const readErrorMsg = readError?.message || String(readError) || '';
