@@ -1,5 +1,5 @@
 import type { Device } from 'react-native-ble-plx';
-import { TEMPERATURE_BLOCK_SERVICE_UUID } from './temperatureBlockProtocol';
+import { TEMPERATURE_BLOCK_SERVICE_UUID, base64ToBytes } from './temperatureBlockProtocol';
 import {
   TEMPO_AQUECIMENTO_BLOCO_UUID,
   parseHeatingTimeFromBase64,
@@ -27,6 +27,37 @@ export async function readTemperatureBlockHeatingTime(
         TEMPERATURE_BLOCK_SERVICE_UUID,
         TEMPO_AQUECIMENTO_BLOCO_UUID,
       );
+      
+      // Log detalhado para o desenvolvedor do hardware - conversão big-endian
+      if (characteristic.value) {
+        const base64Value = characteristic.value;
+        const bytes = base64ToBytes(base64Value);
+        
+        // Converte bytes para ArrayBuffer e lê como float32 big-endian
+        const buffer = new ArrayBuffer(bytes.length);
+        const view = new DataView(buffer);
+        bytes.forEach((byte, index) => {
+          view.setUint8(index, byte);
+        });
+        
+        // Lê como float32 big-endian (false = big-endian)
+        const floatBigEndian = view.getFloat32(0, false);
+        
+        // Lê como float32 little-endian para comparação (true = little-endian)
+        const floatLittleEndian = view.getFloat32(0, true);
+        
+        // Formata bytes em hex
+        const bytesHex = bytes.map(b => `0x${b.toString(16).padStart(2, '0')}`).join(' ');
+        const bytesArray = `[${bytes.map(b => b.toString()).join(', ')}]`;
+        
+        console.log('[DEBUG Hardware - Tempo Aquecimento] Base64 recebido:', base64Value);
+        console.log('[DEBUG Hardware - Tempo Aquecimento] Bytes decodificados:', bytesArray);
+        console.log('[DEBUG Hardware - Tempo Aquecimento] Bytes em hex:', bytesHex);
+        console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 BIG-ENDIAN:', floatBigEndian);
+        console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 LITTLE-ENDIAN (comparação):', floatLittleEndian);
+        console.log('[DEBUG Hardware - Tempo Aquecimento] Valor (big-endian):', floatBigEndian.toFixed(2));
+      }
+      
     } catch (readError: any) {
       const readErrorMsg = readError?.message || String(readError) || '';
       const readErrorString = String(readError).toLowerCase();
