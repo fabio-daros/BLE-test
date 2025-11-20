@@ -18,6 +18,51 @@
   "logcatMessages": [
     {
       "header": {
+        "logLevel": "INFO",
+        "pid": 4400,
+        "tid": 9596,
+        "applicationId": "com.google.android.apps.tachyon",
+        "processName": "com.google.android.apps.tachyon",
+        "tag": "harmony",
+        "timestamp": {
+          "seconds": 1763677753,
+          "nanos": 503000000
+        }
+      },
+      "message": "timestamp_aligner.cc:98: Resetting timestamp translation after averaging 2 frames. Old offset: 3367835, new offset: 1773"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763677753,
+          "nanos": 519000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763677753,
+          "nanos": 519000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
         "logLevel": "ERROR",
         "pid": 955,
         "tid": 955,
@@ -25,158 +70,68 @@
         "processName": "surfaceflinger",
         "tag": "HWComposer",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 102000000
+          "seconds": 1763677753,
+          "nanos": 535000000
         }
       },
       "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
     },
     {
       "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 106000000
-        }
-      },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_manager_initialized\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_manager_initialized\u0027,\n  timestamp: \u00272025-11-20T22:06:46.103Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
+        "logLevel": "DEBUG",
         "pid": 1692,
-        "tid": 2190,
+        "tid": 2223,
         "applicationId": "system_server",
         "processName": "system_server",
-        "tag": "SensorService",
+        "tag": "MIUIInput",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 107000000
+          "seconds": 1763677753,
+          "nanos": 544000000
         }
       },
-      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+      "message": "[MotionEvent] publisher action\u003d0x1, 156784248, channel \u002738a3ff9 com.inpunto/com.inpunto.MainActivity (server)\u0027"
     },
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 1692,
-        "tid": 2190,
-        "applicationId": "system_server",
-        "processName": "system_server",
-        "tag": "SensorService",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 108000000
-        }
-      },
-      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 112000000
+          "seconds": 1763677753,
+          "nanos": 563000000
         }
       },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_permission_granted\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_permission_granted\u0027,\n  timestamp: \u00272025-11-20T22:06:46.109Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+      "message": "[BLE] \u003d\u003d\u003d Iniciando refresh de dispositivos \u003d\u003d\u003d"
     },
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 113000000
+          "seconds": 1763677753,
+          "nanos": 571000000
         }
       },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_state_listener_registered\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_state_listener_registered\u0027,\n  timestamp: \u00272025-11-20T22:06:46.111Z\u0027,\n  withInitialState: true,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_refresh_device_list\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_refresh_device_list\u0027,\n  timestamp: \u00272025-11-20T22:29:13.563Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
     },
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 115000000
-        }
-      },
-      "message": "\u0027[BLE] Estado do Bluetooth mudou para:\u0027, \u0027PoweredOn\u0027"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 116000000
-        }
-      },
-      "message": "[BLE] Bluetooth ligado, mas não iniciando scan aqui (já foi iniciado)"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 117000000
-        }
-      },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_state_changed\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_state_changed\u0027,\n  timestamp: \u00272025-11-20T22:06:46.115Z\u0027,\n  state: \u0027PoweredOn\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 124000000
-        }
-      },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_already_enabled\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_already_enabled\u0027,\n  timestamp: \u00272025-11-20T22:06:46.117Z\u0027,\n  state: \u0027PoweredOn\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 161000000
+          "seconds": 1763677753,
+          "nanos": 589000000
         }
       },
       "message": "\u0027[BLE] Estado atual do Bluetooth:\u0027, \u0027PoweredOn\u0027"
@@ -184,14 +139,14 @@
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 162000000
+          "seconds": 1763677753,
+          "nanos": 592000000
         }
       },
       "message": "[BLE] Iniciando scan de dispositivos..."
@@ -199,29 +154,29 @@
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 162000000
+          "seconds": 1763677753,
+          "nanos": 593000000
         }
       },
-      "message": "\u0027[BLE] isScanningRef.current antes de iniciar:\u0027, true"
+      "message": "\u0027[BLE] isScanningRef.current antes de iniciar:\u0027, false"
     },
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 163000000
+          "seconds": 1763677753,
+          "nanos": 594000000
         }
       },
       "message": "\u0027[BLE] scanStopRef.current antes de iniciar:\u0027, false"
@@ -229,14 +184,44 @@
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763677753,
+          "nanos": 598000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 1692,
+        "tid": 2190,
+        "applicationId": "system_server",
+        "processName": "system_server",
+        "tag": "SensorService",
+        "timestamp": {
+          "seconds": 1763677753,
+          "nanos": 598000000
+        }
+      },
+      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
+    },
+    {
+      "header": {
+        "logLevel": "INFO",
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 166000000
+          "seconds": 1763677753,
+          "nanos": 598000000
         }
       },
       "message": "[BLE] Scan iniciado com sucesso"
@@ -244,152 +229,17 @@
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
         "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 168000000
+          "seconds": 1763677753,
+          "nanos": 599000000
         }
       },
-      "message": "\u0027[BLE] isScanningRef.current após iniciar:\u0027, true"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 172000000
-        }
-      },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_state_checked\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_state_checked\u0027,\n  timestamp: \u00272025-11-20T22:06:46.161Z\u0027,\n  state: \u0027PoweredOn\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 174000000
-        }
-      },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_scan_starting\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_scan_starting\u0027,\n  timestamp: \u00272025-11-20T22:06:46.163Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 176000000
-        }
-      },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_scan_started\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_scan_started\u0027,\n  timestamp: \u00272025-11-20T22:06:46.169Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 182000000
-        }
-      },
-      "message": "[BLE] Parando scan via stopScan()..."
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 184000000
-        }
-      },
-      "message": "\u0027[BLE] isScanningRef.current antes de parar:\u0027, true"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 1692,
-        "tid": 2190,
-        "applicationId": "system_server",
-        "processName": "system_server",
-        "tag": "SensorService",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 186000000
-        }
-      },
-      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 1692,
-        "tid": 2190,
-        "applicationId": "system_server",
-        "processName": "system_server",
-        "tag": "SensorService",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 186000000
-        }
-      },
-      "message": "user found in check list, getPackageName  android.view.OrientationEventListener"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 186000000
-        }
-      },
-      "message": "[BLE] Scan parado com sucesso"
-    },
-    {
-      "header": {
-        "logLevel": "INFO",
-        "pid": 14709,
-        "tid": 14772,
-        "applicationId": "com.inpunto",
-        "processName": "com.inpunto",
-        "tag": "ReactNativeJS",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 190000000
-        }
-      },
-      "message": "\u0027[navigation] Ação do usuário: bluetooth_manager_initialized\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_manager_initialized\u0027,\n  timestamp: \u00272025-11-20T22:06:46.187Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+      "message": "\u0027[BLE] isScanningRef.current após iniciar:\u0027, false"
     },
     {
       "header": {
@@ -400,86 +250,71 @@
         "processName": "surfaceflinger",
         "tag": "HWComposer",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 218000000
+          "seconds": 1763677753,
+          "nanos": 601000000
         }
       },
       "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
     },
     {
       "header": {
-        "logLevel": "DEBUG",
-        "pid": 14709,
-        "tid": 14812,
+        "logLevel": "INFO",
+        "pid": 17124,
+        "tid": 17164,
         "applicationId": "com.inpunto",
         "processName": "com.inpunto",
-        "tag": "BluetoothAdapter",
+        "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 220000000
+          "seconds": 1763677753,
+          "nanos": 602000000
         }
       },
-      "message": "isLeEnabled(): ON"
-    },
-    {
-      "header": {
-        "logLevel": "DEBUG",
-        "pid": 2356,
-        "tid": 2375,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "BtGatt.GattService",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 225000000
-        }
-      },
-      "message": "registerScanner() - UUID\u003d4b7138fb-728e-427a-8347-8e381acdba2e"
-    },
-    {
-      "header": {
-        "logLevel": "VERBOSE",
-        "pid": 2356,
-        "tid": 3024,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "bt_stack",
-        "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 225000000
-        }
-      },
-      "message": "[VERBOSE1:bta_gattc_act.cc(200)] bta_gattc_register: state:2"
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_state_checked\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_state_checked\u0027,\n  timestamp: \u00272025-11-20T22:29:13.590Z\u0027,\n  state: \u0027PoweredOn\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
     },
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 2356,
-        "tid": 3024,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "bt_stack",
+        "pid": 17124,
+        "tid": 17164,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 225000000
+          "seconds": 1763677753,
+          "nanos": 604000000
         }
       },
-      "message": "[INFO:gatt_api.cc(959)] GATT_Register 0eb436ad-ab2d-4ab1-a54b-79c613ecffaf"
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_scan_starting\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_scan_starting\u0027,\n  timestamp: \u00272025-11-20T22:29:13.594Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
     },
     {
       "header": {
         "logLevel": "INFO",
-        "pid": 2356,
-        "tid": 3024,
-        "applicationId": "com.android.bluetooth",
-        "processName": "com.android.bluetooth",
-        "tag": "bt_stack",
+        "pid": 17124,
+        "tid": 17164,
+        "applicationId": "com.inpunto",
+        "processName": "com.inpunto",
+        "tag": "ReactNativeJS",
         "timestamp": {
-          "seconds": 1763676406,
-          "nanos": 225000000
+          "seconds": 1763677753,
+          "nanos": 606000000
         }
       },
-      "message": "[INFO:gatt_api.cc(979)] allocated gatt_if\u003d9"
+      "message": "\u0027[navigation] Ação do usuário: bluetooth_scan_started\u0027, { screen: \u0027HomeWip\u0027,\n  action: \u0027bluetooth_scan_started\u0027,\n  timestamp: \u00272025-11-20T22:29:13.600Z\u0027,\n  userName: \u0027Usuário\u0027,\n  hasBackAction: true }"
+    },
+    {
+      "header": {
+        "logLevel": "ERROR",
+        "pid": 955,
+        "tid": 955,
+        "applicationId": "surfaceflinger",
+        "processName": "surfaceflinger",
+        "tag": "HWComposer",
+        "timestamp": {
+          "seconds": 1763677753,
+          "nanos": 619000000
+        }
+      },
+      "message": "getDisplayConnectionType: getDisplayConnectionType failed for display 19260674575326081: Unsupported (8)"
     }
   ]
 }

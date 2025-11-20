@@ -538,9 +538,9 @@ export const HomeWip: React.FC<Props> = ({
         });
       }
 
-      // NÃO definir isScanningRef.current = true aqui!
-      // Isso será feito DEPOIS que o scan for iniciado com sucesso
+      // Definir estado de scanning ANTES de iniciar o scan (igual ao BluetoothConnectionScreen linha 612)
       setIsScanningDevices(true);
+      isScanningRef.current = true; // Definir como true ANTES de iniciar (igual ao BluetoothConnectionScreen)
       setBluetoothInfoMessage('Buscando dispositivos...');
       setBluetoothErrorMessage(null);
       setBluetoothPopupMode('devices');
@@ -705,9 +705,13 @@ export const HomeWip: React.FC<Props> = ({
         scanStopRef.current = stopScan;
         
         // Garantir que o estado de scanning está correto após iniciar
+        // O isScanningRef.current já foi definido como true antes de iniciar o scan
         if (isMountedRef.current) {
           setIsScanningDevices(true);
-          isScanningRef.current = true; // Garantir que está true
+          // isScanningRef.current já está true, mas garantir que está
+          if (!isScanningRef.current) {
+            isScanningRef.current = true;
+          }
         }
       } catch (error: any) {
         console.error('[BLE] ERRO ao iniciar scan:', error);
