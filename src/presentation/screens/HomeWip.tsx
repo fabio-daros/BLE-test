@@ -1048,6 +1048,10 @@ export const HomeWip: React.FC<Props> = ({
           deviceName,
         });
 
+        // Limpar connectingDeviceId após conexão bem-sucedida
+        setConnectingDeviceId(null);
+
+        // Aguardar 300ms e fechar o popup (mantendo a conexão ativa)
         if (successTimeoutRef.current) {
           clearTimeout(successTimeoutRef.current);
         }
@@ -1055,10 +1059,12 @@ export const HomeWip: React.FC<Props> = ({
           if (!isMountedRef.current) {
             return;
           }
+          // Fechar popup após 300ms, mas manter a conexão ativa
           setBluetoothPopupVisible(false);
           setBluetoothPopupMode('devices');
           setBluetoothInfoMessage(null);
-        }, 1200);
+          // Manter connectedDevice ativo para uso nas próximas telas
+        }, 300);
       } catch (error) {
         if (!isMountedRef.current) {
           return;
@@ -1148,6 +1154,7 @@ export const HomeWip: React.FC<Props> = ({
         devices={bluetoothDevices}
         scanning={isScanningDevices}
         connectingDeviceId={connectingDeviceId}
+        connectedDeviceId={connectedDevice?.id || null}
         infoMessage={bluetoothInfoMessage}
         errorMessage={bluetoothErrorMessage}
         onSelectDevice={deviceId => {
