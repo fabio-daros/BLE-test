@@ -97,13 +97,6 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
             <Text style={styles.deviceName} numberOfLines={1}>
               {item.name}
             </Text>
-            {item.type && (
-              <View style={[styles.deviceTypeBadge, styles.deviceTypeBadgeBle]}>
-                <Text style={[styles.deviceTypeText, styles.deviceTypeTextBle]}>
-                  BLE
-                </Text>
-              </View>
-            )}
           </View>
           {typeof item.rssi === 'number' && (
             <Text style={styles.deviceSignal}>{`${item.rssi} dBm`}</Text>

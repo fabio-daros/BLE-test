@@ -130,7 +130,13 @@ export const HomeWip: React.FC<Props> = ({
       // 1. Componente foi desmontado
       // 2. Popup inicial já foi mostrado/interagido
       // 3. Popup já está visível (pode estar em outro modo)
-      if (isMountedRef.current && !hasInitialPopupShownRef.current && !isBluetoothPopupVisible) {
+      // 4. Há um dispositivo conectado (não mostrar popup inicial se já estiver conectado)
+      if (
+        isMountedRef.current &&
+        !hasInitialPopupShownRef.current &&
+        !isBluetoothPopupVisible &&
+        !connectedDevice // Não mostrar popup inicial se já houver dispositivo conectado
+      ) {
         // Verificar o modo atual antes de definir
         setBluetoothPopupMode(currentMode => {
           // Se o popup já estiver em modo 'devices' ou 'error', não resetar
@@ -154,6 +160,12 @@ export const HomeWip: React.FC<Props> = ({
       isMountedRef.current = false;
       hasInitialPopupShownRef.current = false;
       
+      // Limpar timeout de sucesso se existir
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+        successTimeoutRef.current = null;
+      }
+      
       // Remover listener de estado do Bluetooth (igual ao BluetoothConnectionScreen)
       try {
         if (bluetoothStateSubscriptionRef.current) {
@@ -173,19 +185,22 @@ export const HomeWip: React.FC<Props> = ({
         // ignora
       }
       
+      // Limpar timeouts
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = null;
+      }
+      
       if (successTimeoutRef.current) {
         clearTimeout(successTimeoutRef.current);
         successTimeoutRef.current = null;
       }
+      
       if (scanStopRef.current) {
-        scanStopRef.current();
         scanStopRef.current = null;
       }
-      // Destruir serviços
-      // bleManagerRef.current?.destroy(); -> se destruir aqui o bluetooth nao se mantem aberto e buga o acesso.
-      bleManagerRef.current = null;
     };
-  }, [logUserAction]);
+  }, [isBluetoothPopupVisible, connectedDevice, logUserAction]);
 
 
   // ensureIntentLauncherLoaded removido - usando react-native-intent-launcher ou Linking diretamente
@@ -1055,15 +1070,20 @@ export const HomeWip: React.FC<Props> = ({
         if (successTimeoutRef.current) {
           clearTimeout(successTimeoutRef.current);
         }
+        
+        console.log('[BLE] Agendando fechamento do popup em 300ms...');
         successTimeoutRef.current = setTimeout(() => {
           if (!isMountedRef.current) {
+            console.log('[BLE] Componente não montado, não fechando popup');
             return;
           }
+          console.log('[BLE] Fechando popup após conexão bem-sucedida...');
           // Fechar popup após 300ms, mas manter a conexão ativa
           setBluetoothPopupVisible(false);
           setBluetoothPopupMode('devices');
           setBluetoothInfoMessage(null);
           // Manter connectedDevice ativo para uso nas próximas telas
+          console.log('[BLE] Popup fechado, conexão mantida ativa');
         }, 300);
       } catch (error) {
         if (!isMountedRef.current) {
