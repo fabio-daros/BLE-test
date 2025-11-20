@@ -10,6 +10,7 @@ import {
   monitorTemperatureBlockHeatingTime,
 } from './temperatureBlockHeatingReader';
 import { readCharacteristic, createPeriodicMonitor } from '../core';
+import { readEquipmentStatus } from '../equipmentStatus';
 
 export {
   readTemperatureBlockHeatingTime,
@@ -110,11 +111,14 @@ export async function attachTemperatureBlockMonitors(
 
     // 1. Leitura inicial da temperatura (READ)
     await readTemperatureBlock(device, onMessage);
-
+    
     // 2. Leitura inicial do tempo de aquecimento (READ)
     await readTemperatureBlockHeatingTime(device, onMessage);
 
-    // 3. Monitora temperatura do bloco (leitura periódica)
+    // 3. Leitura inicial do status do equipamento (READ)
+    await readEquipmentStatus(device, onMessage);
+
+    // 4. Monitora temperatura do bloco (leitura periódica)
     try {
       const stopMonitor = await monitorTemperatureBlock(
         device,
@@ -128,7 +132,7 @@ export async function attachTemperatureBlockMonitors(
       );
     }
 
-    // 4. Monitora tempo de aquecimento
+    // 5. Monitora tempo de aquecimento
     try {
       const stopMonitorHeating = await monitorTemperatureBlockHeatingTime(
         device,
