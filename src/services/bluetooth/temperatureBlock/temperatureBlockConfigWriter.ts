@@ -18,6 +18,9 @@ export interface TemperatureBlockConfigResult {
   bytes: [number, number];
 }
 
+const toBinary = (value: number, width: number) =>
+  value.toString(2).padStart(width, '0');
+
 export async function writeTemperatureBlockConfig(
   device: Device,
   onMessage: (msg: string) => void,
@@ -31,10 +34,19 @@ export async function writeTemperatureBlockConfig(
     }
 
     const payload = buildTemperatureBlockConfigPayload(input);
+    const typeBit = payload.bytes[0] >> 7;
+    const temperatureBits = toBinary(payload.bytes[0] & 0b01111111, 7);
+    const byte1Binary = toBinary(payload.bytes[0], 8);
+    const byte2Binary = toBinary(payload.bytes[1], 8);
+    const reactionBits = toBinary(payload.bytes[1], 8);
 
     onMessage(
-      `✍️ Enviando configuração do bloco (${input.testType}) | Temp: ${input.temperatureCelsius}°C | Tempo reação: ${input.reactionTimeMinutes} min | Hex: ${payload.hex}`,
+      `[config bloco] temp ${payload.bytes[0] & 0b01111111}°C -> bits ${temperatureBits} | ` +
+        `tipo ${input.testType} -> bit ${typeBit} | tempo ${payload.bytes[1]}min -> bits ${reactionBits} | ` +
+        `Byte1 (tipo+temp): ${byte1Binary} | Byte2 (tempo): ${byte2Binary}`,
     );
+
+    onMessage(`✍️ Enviando configuração do bloco (${input.testType}) | Hex ${payload.hex}`);
 
     await device.writeCharacteristicWithResponseForService(
       TEMPERATURE_BLOCK_SERVICE_UUID,
@@ -43,7 +55,7 @@ export async function writeTemperatureBlockConfig(
     );
 
     onMessage(
-      `✅ Configuração do bloco enviada com sucesso | Bytes: [0x${payload.bytes[0]
+      `✅ Configuração aplicada | Bytes [0x${payload.bytes[0]
         .toString(16)
         .padStart(2, '0')}, 0x${payload.bytes[1]
         .toString(16)
