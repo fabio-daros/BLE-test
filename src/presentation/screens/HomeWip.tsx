@@ -544,11 +544,9 @@ export const HomeWip: React.FC<Props> = ({
         scanTimeoutRef.current = null;
       }, 10000); // 10.000 ms = 10s
 
-      // Iniciar scan (exatamente igual ao BluetoothConnectionScreen)
+      // Iniciar scan (exatamente igual ao BluetoothConnectionScreen linha 637-691)
       try {
         console.log('[BLE] Iniciando scan de dispositivos...');
-        console.log('[BLE] isScanningRef.current antes de iniciar:', isScanningRef.current);
-        console.log('[BLE] scanStopRef.current antes de iniciar:', !!scanStopRef.current);
         logUserAction('bluetooth_scan_starting', {});
         
         manager.startDeviceScan(null, null, (error: BleError | null, device: Device | null) => {
@@ -557,7 +555,8 @@ export const HomeWip: React.FC<Props> = ({
             const code = (error as any)?.errorCode || 'N/A';
             const reason = (error as any)?.reason || 'N/A';
             
-            console.error('[BLE] ERRO no scan:', msg, 'Código:', code, 'Razão:', reason);
+            console.error('[BLE] ERRO no scan:', msg);
+            console.error('[BLE] Código:', code, 'Razão:', reason);
             logUserAction('bluetooth_scan_error', { 
               message: msg, 
               code: String(code),
@@ -570,7 +569,7 @@ export const HomeWip: React.FC<Props> = ({
               setBluetoothPopupMode('error');
             }
 
-            // Em caso de erro, limpa timeout e para scan
+            // Em caso de erro, limpa timeout e para scan (igual ao BluetoothConnectionScreen linha 646-653)
             if (scanTimeoutRef.current) {
               clearTimeout(scanTimeoutRef.current);
               scanTimeoutRef.current = null;
@@ -581,9 +580,6 @@ export const HomeWip: React.FC<Props> = ({
             
             // Parar o scan ref
             isScanningRef.current = false;
-            if (scanStopRef.current) {
-              scanStopRef.current = null;
-            }
             return;
           }
 
@@ -591,24 +587,26 @@ export const HomeWip: React.FC<Props> = ({
             return;
           }
 
-          // Filtrar apenas dispositivos que contenham "InPunto" no nome (igual ao BluetoothConnectionScreen)
+          // Filtrar apenas dispositivos que contenham "InPunto" no nome (igual ao BluetoothConnectionScreen linha 661-664)
           const name = (device.name || '').trim();
+          console.log('[BLE] Dispositivo encontrado no scan:', name || '(sem nome)', 'ID:', device.id);
+          
           if (!name.includes('InPunto')) {
             return;
           }
 
-          console.log('[BLE] Dispositivo encontrado:', name, 'ID:', device.id, 'RSSI:', device.rssi);
+          console.log('[BLE] Dispositivo InPunto encontrado:', name, 'ID:', device.id, 'RSSI:', device.rssi);
           logUserAction('bluetooth_device_found', { 
             deviceId: device.id,
             deviceName: name,
             rssi: device.rssi
           });
 
-          // Atualizar lista diretamente (igual ao BluetoothConnectionScreen)
+          // Atualizar lista diretamente (igual ao BluetoothConnectionScreen linha 666-690)
           setBluetoothDevices(prev => {
             const idx = prev.findIndex(d => d.id === device.id);
             if (idx >= 0) {
-              // Atualizar dispositivo existente (igual ao BluetoothConnectionScreen linha 669-678)
+              // Atualizar dispositivo existente (igual ao BluetoothConnectionScreen linha 668-678)
               const updated = [...prev];
               const existing = updated[idx];
               updated[idx] = {
@@ -952,9 +950,6 @@ export const HomeWip: React.FC<Props> = ({
         if (scanTimeoutRef.current) {
           clearTimeout(scanTimeoutRef.current);
           scanTimeoutRef.current = null;
-        }
-        if (scanStopRef.current) {
-          scanStopRef.current = null;
         }
         
         setBluetoothInfoMessage(null);
