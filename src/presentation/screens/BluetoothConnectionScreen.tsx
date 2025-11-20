@@ -11,6 +11,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
   ActivityIndicator,
@@ -33,6 +34,8 @@ import {
   attachTemperatureBlockMonitors,
   detachTemperatureBlockMonitors,
   TemperatureBlockSubscriptions,
+  writeTemperatureBlockConfig,
+  type TemperatureBlockTestType,
 } from '../../services/bluetooth/temperatureBlock';
 
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
@@ -59,6 +62,15 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [receivedData, setReceivedData] = useState<string[]>([]);
   const [logsModalVisible, setLogsModalVisible] = useState(false);
+  const [configTemperature, setConfigTemperature] = useState('37');
+  const [configReactionTime, setConfigReactionTime] = useState('15');
+  const [isSendingConfig, setIsSendingConfig] = useState(false);
+  const [lastConfigType, setLastConfigType] = useState<TemperatureBlockTestType | null>(null);
+  const [sendingConfigType, setSendingConfigType] = useState<TemperatureBlockTestType | null>(null);
+  const [lastConfigSummary, setLastConfigSummary] = useState<{
+    temperature: number;
+    reactionTime: number;
+  } | null>(null);
 
   const isMountedRef = useRef(true);
   const hasTriedRestoreRef = useRef(false);
@@ -950,6 +962,56 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
     }
   };
 
+  const handleSendBlockConfig = async (testType: TemperatureBlockTestType) => {
+    const device = connectedDeviceRef.current;
+    if (!device) {
+      Alert.alert('Dispositivo', 'Conecte-se a um dispositivo antes de configurar o bloco.');
+      return;
+    }
+
+    const temperature = Number(configTemperature);
+    if (Number.isNaN(temperature) || temperature < 0 || temperature > 127) {
+      Alert.alert('Configuração', 'Informe uma temperatura válida entre 0 e 127°C.');
+      return;
+    }
+
+    const reactionTime = Number(configReactionTime);
+    if (Number.isNaN(reactionTime) || reactionTime < 0 || reactionTime > 255) {
+      Alert.alert('Configuração', 'Informe um tempo de reação válido entre 0 e 255 minutos.');
+      return;
+    }
+
+    setIsSendingConfig(true);
+    setSendingConfigType(testType);
+    try {
+      const result = await writeTemperatureBlockConfig(device, addLog, {
+        temperatureCelsius: temperature,
+        reactionTimeMinutes: reactionTime,
+        testType,
+      });
+
+      if (result) {
+        setLastConfigType(testType);
+        setLastConfigSummary({
+          temperature: result.temperature,
+          reactionTime: result.reactionTimeMinutes,
+        });
+        addLog(
+          `⚙️ Configuração aplicada (${testType}) | Temp ${result.temperature}°C | Tempo ${result.reactionTimeMinutes} min | Hex ${result.hex}`,
+        );
+      } else {
+        addLog('⚠️ Configuração do bloco não pôde ser enviada.');
+      }
+    } catch (error: any) {
+      const message = error?.message || String(error);
+      addLog(`❌ Erro ao configurar bloco: ${message}`);
+      Alert.alert('Erro', message);
+    } finally {
+      setIsSendingConfig(false);
+      setSendingConfigType(null);
+    }
+  };
+
   const renderDeviceItem = ({ item }: { item: DeviceItem }) => {
     const isConnectingDevice = isConnecting === item.id;
     const disabled = isConnectingDevice;
@@ -1063,6 +1125,77 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
             </View>
           }
         />
+
+        {connectedDevice && (
+          <View style={styles.blockConfigCard}>
+            <Text style={styles.sectionTitle}>Configuração do Bloco</Text>
+            <Text style={styles.blockConfigDescription}>
+              Defina temperatura e tempo de reação (byte 2) e selecione o tipo de teste. O bit 8 do primeiro byte indica o tipo (0=colorimétrico, 1=fluorimétrico).
+            </Text>
+
+            <View style={styles.configInputsRow}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Temperatura (°C)</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={configTemperature}
+                  onChangeText={setConfigTemperature}
+                  maxLength={3}
+                  placeholder="0-127"
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Tempo de reação (min)</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={configReactionTime}
+                  onChangeText={setConfigReactionTime}
+                  maxLength={3}
+                  placeholder="0-255"
+                />
+              </View>
+            </View>
+
+            <View style={styles.configButtonsRow}>
+              <TouchableOpacity
+                style={[
+                  styles.configButton,
+                  lastConfigType === 'colorimetric' && styles.configButtonActive,
+                  isSendingConfig && styles.configButtonDisabled,
+                ]}
+                disabled={isSendingConfig}
+                onPress={() => handleSendBlockConfig('colorimetric')}
+              >
+                <Text style={styles.configButtonText}>
+                  {sendingConfigType === 'colorimetric' ? 'Enviando...' : 'Enviar Colorimétrico'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.configButton,
+                  lastConfigType === 'fluorimetric' && styles.configButtonActive,
+                  isSendingConfig && styles.configButtonDisabled,
+                ]}
+                disabled={isSendingConfig}
+                onPress={() => handleSendBlockConfig('fluorimetric')}
+              >
+                <Text style={styles.configButtonText}>
+                  {sendingConfigType === 'fluorimetric' ? 'Enviando...' : 'Enviar Fluorimétrico'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {lastConfigType && lastConfigSummary && (
+              <Text style={styles.lastConfigInfo}>
+                Última configuração enviada: {lastConfigType} – {lastConfigSummary.temperature}°C /{' '}
+                {lastConfigSummary.reactionTime} min
+              </Text>
+            )}
+          </View>
+        )}
 
         {connectedDevice && receivedData.length > 0 && (
           <View style={styles.logsContainer}>
@@ -1200,6 +1333,60 @@ const styles = StyleSheet.create({
     color: colors.textDark,
   },
   deviceList: { flex: 1, marginBottom: spacing.md },
+  blockConfigCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.gold,
+  },
+  blockConfigDescription: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginBottom: spacing.md,
+  },
+  configInputsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  inputGroup: { flex: 1 },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+    color: colors.textDark,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    fontSize: 16,
+    backgroundColor: colors.background,
+    color: colors.text,
+  },
+  configButtonsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  configButton: {
+    flex: 1,
+    backgroundColor: colors.gold,
+    borderRadius: 10,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  configButtonDisabled: { opacity: 0.6 },
+  configButtonActive: { backgroundColor: colors.success },
+  configButtonText: { color: colors.white, fontWeight: '600' },
+  lastConfigInfo: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
   deviceItem: {
     backgroundColor: colors.white,
     padding: spacing.md,

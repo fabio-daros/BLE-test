@@ -1,4 +1,4 @@
-import { decode as atob } from 'base-64';
+import { decode as atob, encode as btoa } from 'base-64';
 
 // UUIDs do hardware conforme documentação
 export const TEMPERATURE_BLOCK_SERVICE_UUID =
@@ -29,6 +29,18 @@ export function base64ToBytes(value: string | null | undefined): number[] {
   }
 
   return bytes;
+}
+
+export function bytesToBase64(bytes: ArrayLike<number>): string {
+  const len = bytes.length;
+  let binary = '';
+
+  for (let i = 0; i < len; i += 1) {
+    const v = bytes[i] as number;
+    binary += String.fromCharCode(v);
+  }
+
+  return btoa(binary);
 }
 
 
