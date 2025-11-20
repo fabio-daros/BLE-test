@@ -53,6 +53,7 @@ export const HomeWip: React.FC<Props> = ({
   });
 
   const [isBluetoothPopupVisible, setBluetoothPopupVisible] = useState(false);
+  const hasInitialPopupShownRef = useRef(false);
   const [bluetoothPopupMode, setBluetoothPopupMode] = useState<
     'request' | 'error' | 'devices'
   >('request');
@@ -78,7 +79,6 @@ export const HomeWip: React.FC<Props> = ({
   >(null);
   const [bleManagerAvailable, setBleManagerAvailable] = useState(true);
   const [bleManagerInitChecked, setBleManagerInitChecked] = useState(false);
-  const hasShownInitialPopupRef = useRef(false);
 
   const bleManagerRef = useRef<BleManager | null>(null);
   const scanStopRef = useRef<(() => void) | null>(null);
@@ -96,6 +96,9 @@ export const HomeWip: React.FC<Props> = ({
       : null;
 
   useEffect(() => {
+    isMountedRef.current = true;
+    hasInitialPopupShownRef.current = false;
+    
     try {
       const manager = new BleManager();
       bleManagerRef.current = manager;
@@ -109,6 +112,7 @@ export const HomeWip: React.FC<Props> = ({
       );
       setBluetoothPopupMode('error');
       setBluetoothPopupVisible(true);
+      hasInitialPopupShownRef.current = true;
       logUserAction('bluetooth_manager_init_failed', {
         message: (error as Error).message,
       });
@@ -116,8 +120,22 @@ export const HomeWip: React.FC<Props> = ({
 
     setBleManagerInitChecked(true);
 
+    // Mostrar popup automaticamente após inicializar (apenas uma vez)
+    const showPopupTimer = setTimeout(() => {
+      if (isMountedRef.current && !hasInitialPopupShownRef.current) {
+        setBluetoothPopupMode('request');
+        setBluetoothErrorMessage(null);
+        setBluetoothInfoMessage(null);
+        setBluetoothPopupVisible(true);
+        hasInitialPopupShownRef.current = true;
+        logUserAction('bluetooth_permission_popup_shown_on_init');
+      }
+    }, 800);
+
     return () => {
+      clearTimeout(showPopupTimer);
       isMountedRef.current = false;
+      hasInitialPopupShownRef.current = false;
       if (successTimeoutRef.current) {
         clearTimeout(successTimeoutRef.current);
         successTimeoutRef.current = null;
@@ -536,34 +554,6 @@ export const HomeWip: React.FC<Props> = ({
     }
   }, [onNavigateToBluetooth, logUserAction]);
 
-  // Mostrar popup automaticamente ao entrar na tela
-  useEffect(() => {
-    if (!bleManagerInitChecked) {
-      return;
-    }
-
-    // Aguardar um pouco para garantir que a tela foi renderizada
-    const timer = setTimeout(() => {
-      if (isMountedRef.current && !hasShownInitialPopupRef.current) {
-        // Sempre mostrar o popup no modo 'request' ao entrar na tela
-        setBluetoothPopupMode('request');
-        setBluetoothErrorMessage(null);
-        setBluetoothInfoMessage(null);
-        setBluetoothPopupVisible(true);
-        hasShownInitialPopupRef.current = true;
-        logUserAction('bluetooth_permission_popup_shown_on_mount');
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [bleManagerInitChecked, logUserAction]);
-
-  // Resetar o flag quando o componente for desmontado para que apareça novamente na próxima montagem
-  useEffect(() => {
-    return () => {
-      hasShownInitialPopupRef.current = false;
-    };
-  }, []);
 
   const handleBluetoothPermission = useCallback(async () => {
     if (isRequestingBluetooth) {
