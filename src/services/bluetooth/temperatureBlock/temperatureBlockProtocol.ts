@@ -31,6 +31,7 @@ export function base64ToBytes(value: string | null | undefined): number[] {
   return bytes;
 }
 
+
 // --------- Parsing da TEMPERATURA do bloco ---------
 
 /**

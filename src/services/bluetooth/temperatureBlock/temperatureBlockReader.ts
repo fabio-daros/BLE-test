@@ -4,6 +4,17 @@ import {
   TEMPERATURA_BLOCO_UUID,
   parseTemperatureBlockFromBase64,
 } from './temperatureBlockProtocol';
+import type { TemperatureBlockHeatingTimeStatus } from './temperatureBlockHeatingProtocol';
+import {
+  readTemperatureBlockHeatingTime,
+  monitorTemperatureBlockHeatingTime,
+} from './temperatureBlockHeatingReader';
+
+export {
+  readTemperatureBlockHeatingTime,
+  monitorTemperatureBlockHeatingTime,
+};
+export type { TemperatureBlockHeatingTimeStatus };
 
 export interface TemperatureBlockSubscriptions {
   stop: () => void;
@@ -205,6 +216,7 @@ export async function monitorTemperatureBlock(
   };
 }
 
+
 /**
  * Anexa monitoramento da temperatura do bloco
  */
@@ -212,6 +224,7 @@ export async function attachTemperatureBlockMonitors(
   device: Device,
   onMessage: (msg: string) => void,
   onTemperatureUpdate?: (temperature: number) => void,
+  onHeatingTimeUpdate?: (status: TemperatureBlockHeatingTimeStatus) => void,
 ): Promise<TemperatureBlockSubscriptions> {
   const stopFunctions: Array<() => void> = [];
 
@@ -223,7 +236,10 @@ export async function attachTemperatureBlockMonitors(
     // 1. Leitura inicial da temperatura (READ)
     await readTemperatureBlock(device, onMessage);
 
-    // 2. Monitora temperatura do bloco (leitura periódica)
+    // 2. Leitura inicial do tempo de aquecimento (READ)
+    await readTemperatureBlockHeatingTime(device, onMessage);
+
+    // 3. Monitora temperatura do bloco (leitura periódica)
     try {
       const stopMonitor = await monitorTemperatureBlock(
         device,
@@ -237,7 +253,21 @@ export async function attachTemperatureBlockMonitors(
       );
     }
 
-    onMessage('✅ Monitoramento da temperatura do bloco foi anexado');
+    // 4. Monitora tempo de aquecimento
+    try {
+      const stopMonitorHeating = await monitorTemperatureBlockHeatingTime(
+        device,
+        onMessage,
+        onHeatingTimeUpdate,
+      );
+      stopFunctions.push(stopMonitorHeating);
+    } catch (error: any) {
+      onMessage(
+        `⚠️ Não foi possível monitorar tempo de aquecimento do bloco: ${error?.message || String(error)}`,
+      );
+    }
+
+    onMessage('✅ Monitoramentos do bloco foram anexados');
 
     return {
       stop: () => {
