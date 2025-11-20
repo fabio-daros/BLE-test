@@ -23,7 +23,17 @@ import {
   attachPreTestMonitors,
   detachPreTestMonitors,
   PreTestSubscriptions,
-} from '../../services/bluetooth/preTest/preTestReader';
+} from '../../services/bluetooth/preTest';
+import {
+  attachBatteryStatsMonitors,
+  detachBatteryStatsMonitors,
+  BatteryStatsSubscriptions,
+} from '../../services/bluetooth/batteryStats';
+import {
+  attachTemperatureBlockMonitors,
+  detachTemperatureBlockMonitors,
+  TemperatureBlockSubscriptions,
+} from '../../services/bluetooth/temperatureBlock';
 
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 
@@ -58,6 +68,8 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const preTestSubsRef = useRef<PreTestSubscriptions | null>(null);
+  const batteryStatsSubsRef = useRef<BatteryStatsSubscriptions | null>(null);
+  const temperatureBlockSubsRef = useRef<TemperatureBlockSubscriptions | null>(null);
 
 
   const addLog = (message: any) => {
@@ -111,24 +123,12 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
   };
 
   /**
-   * ATENÇÃO:
-   * Por causa do bug de SafePromise/SafeReadCharacteristic da lib BLE,
-   * a leitura periódica foi desativada. Mantive a função apenas para log.
-   */
-  const startPeriodicRead = (_device: Device) => {
-    addLog(
-      'Leitura periódica desativada temporariamente (bug da lib BLE com SafePromise). ' +
-      'Conexão estável, mas sem leitura automática de dados.',
-    );
-  };
-
-  /**
-   * Aqui só inspecionamos serviços/características e logamos.
-   * Não registramos monitor nem fazemos read para evitar o bug nativo.
+   * Inspeciona serviços e características do dispositivo
+   * O monitoramento real do pré-teste é feito via attachPreTestMonitors
    */
   const startMonitoringDevice = async (device: Device) => {
     try {
-      addLog('=== Preparando monitoramento (SEM leituras/monitores ativos) ===');
+      addLog('=== Inspecionando serviços e características ===');
       const services = await device.services();
       let notifyCount = 0;
 
@@ -156,15 +156,12 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
 
       addLog(
         `Encontradas ${notifyCount} características notificáveis. ` +
-        'Monitoramento por notificações/leitura está desativado por enquanto para evitar crashes.',
+        'O monitoramento do pré-teste será iniciado após a inspeção.',
       );
-
-      // se no futuro quisermos reativar algo simples, chamamos aqui:
-      startPeriodicRead(device);
     } catch (error: any) {
       const errorMsg = error?.message || String(error);
-      addLog(`Erro ao preparar monitoramento: ${errorMsg}`);
-      console.error('[BLE] Erro ao iniciar monitoramento:', error);
+      addLog(`Erro ao inspecionar dispositivo: ${errorMsg}`);
+      console.error('[BLE] Erro ao inspecionar dispositivo:', error);
     }
   };
 
@@ -263,6 +260,57 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
 
     await startMonitoringDevice(device);
 
+    addLog('=== Iniciando monitoramento do pré-teste (restaurado) ===');
+    try {
+      preTestSubsRef.current = await attachPreTestMonitors(device, msg => {
+        addLog(msg);
+        setReceivedData(prev => [msg, ...prev].slice(0, 100));
+      });
+      addLog('✅ Monitores de pré-teste anexados ao dispositivo (restaurado).');
+    } catch (e: any) {
+      addLog(
+        `❌ Erro ao anexar monitores de pré-teste (restaurado): ${e?.message || String(e)}`,
+      );
+    }
+
+    addLog('=== Iniciando monitoramento do status da bateria (restaurado) ===');
+    try {
+      batteryStatsSubsRef.current = await attachBatteryStatsMonitors(
+        device,
+        msg => {
+          addLog(msg);
+          setReceivedData(prev => [msg, ...prev].slice(0, 100));
+        },
+        (percentage) => {
+          addLog(`🔋 Bateria atualizada: ${percentage}%`);
+        }
+      );
+      addLog('✅ Monitoramento da bateria anexado ao dispositivo (restaurado).');
+    } catch (e: any) {
+      addLog(
+        `❌ Erro ao anexar monitoramento da bateria (restaurado): ${e?.message || String(e)}`,
+      );
+    }
+
+    addLog('=== Iniciando monitoramento da temperatura do bloco (restaurado) ===');
+    try {
+      temperatureBlockSubsRef.current = await attachTemperatureBlockMonitors(
+        device,
+        msg => {
+          addLog(msg);
+          setReceivedData(prev => [msg, ...prev].slice(0, 100));
+        },
+        (temperature) => {
+          addLog(`🌡️ Temperatura atualizada: ${temperature}°C`);
+        }
+      );
+      addLog('✅ Monitoramento da temperatura do bloco anexado ao dispositivo (restaurado).');
+    } catch (e: any) {
+      addLog(
+        `❌ Erro ao anexar monitoramento da temperatura (restaurado): ${e?.message || String(e)}`,
+      );
+    }
+
     device.onDisconnected(async () => {
       addLog(`Desconectado de ${device.name || device.id} (restaurado)`);
 
@@ -282,6 +330,16 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
       if (preTestSubsRef.current) {
         detachPreTestMonitors(preTestSubsRef.current, addLog);
         preTestSubsRef.current = null;
+      }
+
+      if (batteryStatsSubsRef.current) {
+        detachBatteryStatsMonitors(batteryStatsSubsRef.current, addLog);
+        batteryStatsSubsRef.current = null;
+      }
+
+      if (temperatureBlockSubsRef.current) {
+        detachTemperatureBlockMonitors(temperatureBlockSubsRef.current, addLog);
+        temperatureBlockSubsRef.current = null;
       }
 
       connectedDeviceRef.current = null;
@@ -694,6 +752,7 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
 
       await startMonitoringDevice(device);
 
+      addLog('=== Iniciando monitoramento do pré-teste ===');
       try {
         preTestSubsRef.current = await attachPreTestMonitors(device, msg => {
           // 1) manda pro log da tela
@@ -707,10 +766,88 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
         addLog(
           `❌ Erro ao anexar monitores de pré-teste: ${e?.message || String(e)}`,
         );
+        console.error('[BLE] Erro ao anexar monitores:', e);
+      }
+
+      addLog('=== Iniciando monitoramento do status da bateria ===');
+      try {
+        batteryStatsSubsRef.current = await attachBatteryStatsMonitors(
+          device,
+          msg => {
+            // 1) manda pro log da tela
+            addLog(msg);
+
+            // 2) opcional: joga também em "Dados Recebidos" pra você ver separado
+            setReceivedData(prev => [msg, ...prev].slice(0, 100));
+          },
+          (percentage) => {
+            // Callback quando a bateria é atualizada
+            addLog(`🔋 Bateria atualizada: ${percentage}%`);
+          }
+        );
+        addLog('✅ Monitoramento da bateria anexado ao dispositivo.');
+      } catch (e: any) {
+        addLog(
+          `❌ Erro ao anexar monitoramento da bateria: ${e?.message || String(e)}`,
+        );
+        console.error('[BLE] Erro ao anexar monitoramento da bateria:', e);
+      }
+
+      addLog('=== Iniciando monitoramento da temperatura do bloco ===');
+      try {
+        temperatureBlockSubsRef.current = await attachTemperatureBlockMonitors(
+          device,
+          msg => {
+            // 1) manda pro log da tela
+            addLog(msg);
+
+            // 2) opcional: joga também em "Dados Recebidos" pra você ver separado
+            setReceivedData(prev => [msg, ...prev].slice(0, 100));
+          },
+          (temperature) => {
+            // Callback quando a temperatura é atualizada
+            addLog(`🌡️ Temperatura atualizada: ${temperature}°C`);
+          }
+        );
+        addLog('✅ Monitoramento da temperatura do bloco anexado ao dispositivo.');
+      } catch (e: any) {
+        addLog(
+          `❌ Erro ao anexar monitoramento da temperatura: ${e?.message || String(e)}`,
+        );
+        console.error('[BLE] Erro ao anexar monitoramento da temperatura:', e);
       }
 
       device.onDisconnected(async () => {
         addLog(`Desconectado de ${deviceItem.name || deviceItem.id}`);
+
+        // PARA TODOS OS MONITORES IMEDIATAMENTE (antes de qualquer outra coisa)
+        // Isso evita que leituras pendentes causem crash
+        if (batteryStatsSubsRef.current) {
+          try {
+            detachBatteryStatsMonitors(batteryStatsSubsRef.current, addLog);
+          } catch (e) {
+            // Ignora erros ao desanexar
+          }
+          batteryStatsSubsRef.current = null;
+        }
+
+        if (temperatureBlockSubsRef.current) {
+          try {
+            detachTemperatureBlockMonitors(temperatureBlockSubsRef.current, addLog);
+          } catch (e) {
+            // Ignora erros ao desanexar
+          }
+          temperatureBlockSubsRef.current = null;
+        }
+
+        if (preTestSubsRef.current) {
+          try {
+            detachPreTestMonitors(preTestSubsRef.current, addLog);
+          } catch (e) {
+            // Ignora erros ao desanexar
+          }
+          preTestSubsRef.current = null;
+        }
 
         connectedDeviceRef.current = null;
 
@@ -722,11 +859,6 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
             `Erro ao limpar último device conectado (onDisconnected): ${e?.message || String(e)
             }`,
           );
-        }
-
-        if (preTestSubsRef.current) {
-          detachPreTestMonitors(preTestSubsRef.current, addLog);
-          preTestSubsRef.current = null;
         }
 
         if (isMountedRef.current) {
@@ -779,6 +911,16 @@ export const BluetoothConnectionScreen: React.FC<BluetoothConnectionScreenProps>
       if (preTestSubsRef.current) {
         detachPreTestMonitors(preTestSubsRef.current, addLog);
         preTestSubsRef.current = null;
+      }
+
+      if (batteryStatsSubsRef.current) {
+        detachBatteryStatsMonitors(batteryStatsSubsRef.current, addLog);
+        batteryStatsSubsRef.current = null;
+      }
+
+      if (temperatureBlockSubsRef.current) {
+        detachTemperatureBlockMonitors(temperatureBlockSubsRef.current, addLog);
+        temperatureBlockSubsRef.current = null;
       }
 
       addLog(`Desconectado de ${deviceItem.name || deviceItem.id}`);

@@ -1,18 +1,23 @@
 import { decode as atob, encode as btoa } from 'base-64';
 
-// TODO: Substituir pelas UUIDs reais do hardware
+// UUIDs do hardware conforme documentação
 export const PRE_TEST_SERVICE_UUID =
-  '0000aaaa-0000-1000-8000-00805f9b34fb';
+  '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 
-export const PRE_TEST_STATUS_CHAR_UUID =
-  '0000aa01-0000-1000-8000-00805f9b34fb';
+// Características do pré-teste
+export const PRETESTE_UUID = '7c01e789-e2c2-4194-bf38-e276e8f5cf8a'; // READ - Status atual do preteste
+export const PRETESTE_RESULTADO_UUID = '18caa5e0-ac2d-4819-83af-cf8b4d530d20'; // NOTIFY, READ - Resultado do preteste
+export const ERRO_ANALISE_UUID = 'cac8858d-2b4a-4fdd-a89b-6cfd28b4743f'; // NOTIFY, READ - Falha na análise
+export const SUCESSO_ANALISE_UUID = '8a017ac9-e48c-4849-9923-7d1db7f399b1'; // NOTIFY - Análise concluída
 
-export const PRE_TEST_FAILURE_CHAR_UUID =
-  '0000aa02-0000-1000-8000-00805f9b34fb';
-
-// (Opcional) characteristic para enviar comandos de "get statamsus" / "get result"
-export const PRE_TEST_COMMAND_CHAR_UUID =
-  '0000aa03-0000-1000-8000-00805f9b34fb';
+// Outras características (para referência futura)
+export const CONFIGURA_BLOCO_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8'; // WRITE - Configurar temperatura e tipo de teste
+export const STATUS_BATERIA_UUID = '906d7ba4-d34c-4f2c-8633-c08239c4a432'; // READ - Porcentagem da bateria
+export const TEMPERATURA_BLOCO_UUID = 'df60fccb-9b33-4492-a633-e68e7df3c58d'; // READ - Temperatura atual do bloco
+export const TEMPO_AQUECIMENTO_BLOCO_UUID = 'b3da2006-d898-43e4-933c-fb6e389ffd09'; // READ - Tempo de aquecimento
+export const STATUS_DISPOSITIVO_UUID = '4c6098a9-0f22-494c-9b10-bc136656bc18'; // READ - Tempo decorrido desde início
+export const QUANTIDADE_TESTE_MEMORIA_UUID = '563a426f-c423-4b89-8d2b-269c8a45b826'; // READ - Quantos testes em memória
+export const RECUPERA_TESTE_MEMORIA_UUID = 'f0730b28-328c-4b89-b058-95a8817137eb'; // READ - Retorna teste da memória
 
 // --------- Tipos de alto nível ---------
 
