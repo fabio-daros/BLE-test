@@ -60,105 +60,124 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
   useEffect(() => {
     isMountedRef.current = true;
 
-    try {
-      // Inicializar BleManager de forma segura
-      const manager = new BleManager();
-      bleManagerRef.current = manager;
-      setBleManager(manager); // Atualizar estado para que o contexto re-renderize
-      setBleManagerAvailable(true);
-      logUserAction('bluetooth_manager_initialized', { context: 'BluetoothProvider' });
+    const initializeBluetooth = async () => {
+      let manager: BleManager | null = null;
+      
+      try {
+        // Inicializar BleManager de forma segura
+        manager = new BleManager();
+        bleManagerRef.current = manager;
+        setBleManager(manager); // Atualizar estado para que o contexto re-renderize
+        setBleManagerAvailable(true);
+        logUserAction('bluetooth_manager_initialized', { context: 'BluetoothProvider' });
 
-      // Registrar listener de estado do Bluetooth
-      if (!bluetoothStateSubscriptionRef.current) {
-        try {
-          // Tentar registrar listener sem emitir estado inicial primeiro (mais seguro)
-          const subscription = manager.onStateChange(
-            (state: BleState) => {
-              if (!isMountedRef.current) return;
+        // Aguardar um pouco antes de registrar o listener para garantir que o manager esteja pronto
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 300));
 
-              console.log('[BLE Context] Estado do Bluetooth mudou para:', state);
-              logUserAction('bluetooth_state_changed', { state, context: 'BluetoothProvider' });
-
-              if (state === 'PoweredOff') {
-                console.log('[BLE Context] Bluetooth desligado, limpando dispositivo conectado');
-                // Limpar dispositivo conectado quando o Bluetooth é desligado
-                setConnectedDeviceState(null);
-              }
-            },
-            false, // Começar com false para evitar erro na inicialização
-          );
-          bluetoothStateSubscriptionRef.current = subscription;
-          logUserAction('bluetooth_state_listener_registered', {
-            withInitialState: false,
-            context: 'BluetoothProvider',
-          });
-        } catch (error: any) {
-          console.error(
-            '[BLE Context] Erro ao registrar listener de estado do Bluetooth:',
-            error,
-          );
-          logUserAction('bluetooth_state_listener_critical_error', {
-            error: error?.message || 'Erro desconhecido',
-            context: 'BluetoothProvider',
-          });
+        // Registrar listener de estado do Bluetooth apenas se ainda estiver montado
+        if (!isMountedRef.current || !manager) {
+          return;
         }
-      }
 
-      // Verificar se há dispositivos conectados quando o contexto é inicializado
-      const checkConnectedDevices = async () => {
-        try {
-          // Tentar verificar se há dispositivos conectados
-          // Nota: Isso pode não funcionar sem SERVICE_UUID, mas tentamos de qualquer forma
-          if (connectedDevice) {
-            try {
-              // Tentar obter o dispositivo pelo ID para verificar se ainda está conectado
-              const devices = await (manager as any).devices([connectedDevice.id]);
-              if (devices && devices.length > 0) {
-                const device = devices[0];
-                const isConnected = await device.isConnected();
-                if (!isConnected) {
-                  console.log('[BLE Context] Dispositivo não está mais conectado, limpando');
+        if (!bluetoothStateSubscriptionRef.current) {
+          try {
+            // Tentar registrar listener sem emitir estado inicial primeiro (mais seguro)
+            const subscription = manager.onStateChange(
+              (state: BleState) => {
+                if (!isMountedRef.current) return;
+
+                console.log('[BLE Context] Estado do Bluetooth mudou para:', state);
+                logUserAction('bluetooth_state_changed', { state, context: 'BluetoothProvider' });
+
+                if (state === 'PoweredOff') {
+                  console.log('[BLE Context] Bluetooth desligado, limpando dispositivo conectado');
+                  // Limpar dispositivo conectado quando o Bluetooth é desligado
                   setConnectedDeviceState(null);
-                } else {
-                  console.log('[BLE Context] Dispositivo ainda está conectado:', connectedDevice.name);
                 }
-              } else {
-                console.log('[BLE Context] Dispositivo não encontrado, limpando');
-                setConnectedDeviceState(null);
-              }
-            } catch (checkError) {
-              console.warn('[BLE Context] Erro ao verificar conexão do dispositivo:', checkError);
-              // Se houver erro, manter o estado (pode ser que o método não exista)
+              },
+              false, // Começar com false para evitar erro na inicialização
+            );
+            bluetoothStateSubscriptionRef.current = subscription;
+            logUserAction('bluetooth_state_listener_registered', {
+              withInitialState: false,
+              context: 'BluetoothProvider',
+            });
+          } catch (error: any) {
+            console.error(
+              '[BLE Context] Erro ao registrar listener de estado do Bluetooth:',
+              error,
+            );
+            // Não logar erro se for o erro conhecido "Unknown error occurred"
+            if (!error?.message?.includes('Unknown error occurred')) {
+              logUserAction('bluetooth_state_listener_critical_error', {
+                error: error?.message || 'Erro desconhecido',
+                context: 'BluetoothProvider',
+              });
             }
           }
-        } catch (error) {
-          console.warn('[BLE Context] Erro ao verificar dispositivos conectados:', error);
         }
-      };
 
-      // Verificar dispositivos conectados após um pequeno delay
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          checkConnectedDevices();
+        // Verificar se há dispositivos conectados quando o contexto é inicializado
+        const checkConnectedDevices = async () => {
+          try {
+            // Tentar verificar se há dispositivos conectados
+            // Nota: Isso pode não funcionar sem SERVICE_UUID, mas tentamos de qualquer forma
+            if (connectedDevice && manager) {
+              try {
+                // Tentar obter o dispositivo pelo ID para verificar se ainda está conectado
+                const devices = await (manager as any).devices([connectedDevice.id]);
+                if (devices && devices.length > 0) {
+                  const device = devices[0];
+                  const isConnected = await device.isConnected();
+                  if (!isConnected) {
+                    console.log('[BLE Context] Dispositivo não está mais conectado, limpando');
+                    setConnectedDeviceState(null);
+                  } else {
+                    console.log('[BLE Context] Dispositivo ainda está conectado:', connectedDevice.name);
+                  }
+                } else {
+                  console.log('[BLE Context] Dispositivo não encontrado, limpando');
+                  setConnectedDeviceState(null);
+                }
+              } catch (checkError) {
+                console.warn('[BLE Context] Erro ao verificar conexão do dispositivo:', checkError);
+                // Se houver erro, manter o estado (pode ser que o método não exista)
+              }
+            }
+          } catch (error) {
+            console.warn('[BLE Context] Erro ao verificar dispositivos conectados:', error);
+          }
+        };
+
+        // Verificar dispositivos conectados após um pequeno delay (apenas se manager foi criado)
+        if (manager) {
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              checkConnectedDevices();
+            }
+          }, 500); // Aumentar delay para garantir que o manager esteja totalmente pronto
         }
-      }, 100);
-    } catch (error) {
-      console.error('[BLE Context] Erro ao inicializar BleManager:', error);
-      bleManagerRef.current = null;
-      setBleManager(null); // Limpar estado também
-      setBleManagerAvailable(false);
-      // Não logar erro se for um erro conhecido (ex: permissões não concedidas ainda)
-      if (error && typeof error === 'object' && 'message' in error) {
-        const errorMessage = (error as Error).message;
-        // Só logar se não for um erro esperado
-        if (!errorMessage.includes('permission') && !errorMessage.includes('Permission')) {
-          logUserAction('bluetooth_manager_init_failed', {
-            message: errorMessage,
-            context: 'BluetoothProvider',
-          });
+      } catch (error) {
+        console.error('[BLE Context] Erro ao inicializar BleManager:', error);
+        bleManagerRef.current = null;
+        setBleManager(null); // Limpar estado também
+        setBleManagerAvailable(false);
+        // Não logar erro se for o erro conhecido "Unknown error occurred"
+        if (error && typeof error === 'object' && 'message' in error) {
+          const errorMessage = (error as Error).message;
+          if (!errorMessage.includes('Unknown error occurred') && 
+              !errorMessage.includes('permission') && 
+              !errorMessage.includes('Permission')) {
+            logUserAction('bluetooth_manager_init_failed', {
+              message: errorMessage,
+              context: 'BluetoothProvider',
+            });
+          }
         }
       }
-    }
+    };
+
+    initializeBluetooth();
 
     return () => {
       isMountedRef.current = false;
@@ -184,7 +203,7 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
         console.warn('[BLE Context] Erro ao destruir BleManager:', e);
       }
     };
-  }, [logUserAction]);
+  }, [logUserAction, connectedDevice]);
 
   // Função para definir dispositivo conectado
   const setConnectedDevice = useCallback((device: ConnectedDevice | null) => {
