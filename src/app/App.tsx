@@ -69,6 +69,7 @@ import type { SampleItem } from '@presentation/screens/PipettingInProgress';
 import type { AmostraResultado } from '@presentation/screens/ResultsScreen';
 import { testDataService } from '@/data/test-data-service';
 import { NavigationProvider } from '@/contexts/NavigationContext';
+import { BluetoothProvider } from '@/contexts/BluetoothContext';
 
 export const App: React.FC = () => {
   const [currentState, setCurrentState] = useState<
@@ -1961,14 +1962,16 @@ export const App: React.FC = () => {
   // Componente interno que usa hooks do Clerk
   const AppContent: React.FC = () => {
     return (
-      <NavigationProvider
-        currentState={currentState as any}
-        previousState={previousState}
-        setCurrentState={(state) => setCurrentState(state as any)}
-        setPreviousState={setPreviousState}
-      >
-        <View style={styles.container}>{renderScreen()}</View>
-      </NavigationProvider>
+      <BluetoothProvider>
+        <NavigationProvider
+          currentState={currentState as any}
+          previousState={previousState}
+          setCurrentState={(state) => setCurrentState(state as any)}
+          setPreviousState={setPreviousState}
+        >
+          <View style={styles.container}>{renderScreen()}</View>
+        </NavigationProvider>
+      </BluetoothProvider>
     );
   };
 
