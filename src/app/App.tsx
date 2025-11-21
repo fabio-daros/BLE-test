@@ -1551,8 +1551,7 @@ export const App: React.FC = () => {
               navigateToState('sampleIdentification');
             }}
             initialTempC={31}
-            tempLabel="TEMPERATURA DO EQUIPAMENTO"
-            tempMessage="O equipamento está sendo aquecido para a execução do teste."
+            tempLabel="TEMP. DO BLOCO"
             startExpandedPill={true}
           />
         );
@@ -1611,8 +1610,8 @@ export const App: React.FC = () => {
         // Calcular duração em segundos a partir do perfil do teste selecionado
         const calculateDuration = (): number => {
           if (selectedTest?.profile?.totalTime) {
-            const { minutes, seconds } = selectedTest.profile.totalTime;
-            return minutes * 60 + seconds;
+            const { minutes } = selectedTest.profile.totalTime;
+            return minutes * 60; // Converter apenas minutos para segundos
           }
           // Fallback: 120 segundos (2 minutos) se não houver perfil
           return 120;
@@ -1959,40 +1958,29 @@ export const App: React.FC = () => {
 
   
 
-  // Componente condicional que só disponibiliza BluetoothProvider para telas que precisam
-  const ConditionalBluetoothProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Telas que NÃO devem ter acesso ao contexto Bluetooth
-    const screensWithoutBluetooth: string[] = ['login', 'admin'];
-    
-    if (screensWithoutBluetooth.includes(currentState)) {
-      // Renderizar sem BluetoothProvider
-      return <>{children}</>;
-    }
-    
-    // Renderizar com BluetoothProvider para todas as outras telas
-    return <BluetoothProvider>{children}</BluetoothProvider>;
-  };
+  // REMOVIDO ConditionalBluetoothProvider - sempre manter o provider montado
+  // O provider agora gerencia sua própria inicialização e não causa problemas
+  // mesmo em telas que não usam Bluetooth diretamente
 
   // Componente interno que usa hooks do Clerk
   const AppContent: React.FC = () => {
     return (
-      <ConditionalBluetoothProvider>
-        <NavigationProvider
-          currentState={currentState as any}
-          previousState={previousState}
-          setCurrentState={(state) => setCurrentState(state as any)}
-          setPreviousState={setPreviousState}
-        >
-          <View style={styles.container}>{renderScreen()}</View>
-        </NavigationProvider>
-      </ConditionalBluetoothProvider>
+      <NavigationProvider
+        currentState={currentState as any}
+        previousState={previousState}
+        setCurrentState={(state) => setCurrentState(state as any)}
+        setPreviousState={setPreviousState}
+      >
+        <View style={styles.container}>{renderScreen()}</View>
+      </NavigationProvider>
     );
   };
 
-
   return (
     <ClerkProvider>
-      <AppContent />
+      <BluetoothProvider>
+        <AppContent />
+      </BluetoothProvider>
     </ClerkProvider>
   );
 };

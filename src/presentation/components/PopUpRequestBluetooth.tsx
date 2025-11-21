@@ -161,13 +161,6 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                     {infoMessage && (
                       <View style={styles.statusInfo}>
                         <Text style={styles.statusInfoText}>{infoMessage}</Text>
-                        {scanning && (
-                          <ActivityIndicator
-                            size="small"
-                            color={colors.gold}
-                            style={styles.statusIndicator}
-                          />
-                        )}
                       </View>
                     )}
 
@@ -223,13 +216,9 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                         activeOpacity={0.85}
                         disabled={scanning || loading}
                       >
-                        {scanning ? (
-                          <ActivityIndicator size="small" color={colors.gold} />
-                        ) : (
-                          <Text style={styles.secondaryText}>
-                            Atualizar lista
-                          </Text>
-                        )}
+                        <Text style={styles.secondaryText}>
+                          Atualizar lista
+                        </Text>
                       </TouchableOpacity>
                     )}
                   </>
@@ -250,13 +239,6 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                       Para continuar, é necessário conceder a permissão para
                       ativar a conexão.
                     </Text>
-                    {loading && (
-                      <ActivityIndicator
-                        size="small"
-                        color={colors.gold}
-                        style={styles.statusIndicator}
-                      />
-                    )}
                   </>
                 )}
 
@@ -273,13 +255,9 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                     accessibilityLabel={primaryButtonLabel}
                     disabled={loading}
                   >
-                    {loading ? (
-                      <ActivityIndicator size="small" color={colors.white} />
-                    ) : (
-                      <Text style={styles.primaryText}>
-                        {primaryButtonLabel}
-                      </Text>
-                    )}
+                    <Text style={styles.primaryText}>
+                      {primaryButtonLabel}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
