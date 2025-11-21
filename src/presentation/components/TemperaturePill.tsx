@@ -12,8 +12,10 @@ import { AntDesign, MaterialCommunityIcons } from '@/utils/vector-icons-helper';
 import { colors } from '@presentation/theme';
 
 interface TemperaturePillProps {
-  /** Temperatura inicial em Celsius */
+  /** Temperatura inicial em Celsius (usado se currentTempC não fornecido) */
   initialTempC?: number;
+  /** Temperatura atual em tempo real (sobrescreve initialTempC) */
+  currentTempC?: number | null;
   /** Label da temperatura */
   tempLabel?: string;
   /** Mensagem adicional (opcional) */
@@ -33,6 +35,7 @@ const BOTTOM_GUARD = 110;
 
 export const TemperaturePill: React.FC<TemperaturePillProps> = ({
   initialTempC = 31,
+  currentTempC, // Nova prop para temperatura em tempo real
   tempLabel = 'TEMPERATURA DO EQUIPAMENTO',
   tempMessage = null,
   startExpanded = true,
@@ -128,6 +131,21 @@ export const TemperaturePill: React.FC<TemperaturePillProps> = ({
     }
   };
 
+  // Usar currentTempC se disponível, senão usar initialTempC
+  // Se currentTempC for null e não houver initialTempC, mostrar "--"
+  const displayTemp = currentTempC !== null && currentTempC !== undefined 
+    ? currentTempC 
+    : initialTempC;
+
+  // Determinar se deve mostrar "--" (quando não há temperatura válida)
+  const hasValidTemperature = currentTempC !== null && currentTempC !== undefined;
+  const shouldShowPlaceholder = !hasValidTemperature;
+
+  // Arredondar para 1 casa decimal (ex: 34.6 → 34.6, 34.65 → 34.7, 34.95 → 35.0)
+  const displayTempRounded = shouldShowPlaceholder 
+    ? null 
+    : Math.round(displayTemp * 10) / 10;
+
   if (!pillVisible) {
     return null;
   }
@@ -179,7 +197,11 @@ export const TemperaturePill: React.FC<TemperaturePillProps> = ({
                   {tempLabel}
                 </Text>
                 <View style={styles.tempChip}>
-                  <Text style={styles.tempChipText}>{`${initialTempC}°C`}</Text>
+                  <Text style={styles.tempChipText}>
+                    {displayTempRounded === null
+                      ? '--' 
+                      : `${displayTempRounded.toFixed(1)}°C`}
+                  </Text>
                 </View>
               </View>
               {!!tempMessage && (

@@ -13,9 +13,10 @@ import { AppHeader, TemperaturePill } from '@presentation/components';
 import { BottomBar } from '@/ui/BottomBar';
 import { colors } from '@presentation/theme';
 
-// ⚠️ Ajuste o caminho conforme sua estrutura
+
 import Tube from '../../../assets/Vector.svg';
 import TubeSelected from '../../../assets/VectorSelected.svg';
+import { useTemperatureBlockMonitoring } from '@/services/bluetooth/temperatureBlock';
 
 interface TubeSize {
   width: number;
@@ -91,6 +92,9 @@ const SelectWells: React.FC<Props> = ({
 
   // ---- Pop-up de temperatura removido - agora usando componente TemperaturePill
 
+  // Hook para monitorar temperatura em tempo real
+  const { temperature, isMonitoring } = useTemperatureBlockMonitoring();
+
   // ---- Cálculo conveniente do tamanho da célula
   const cardPaddingH = 16; // padding horizontal interno do card
   const innerW = wellsCardWidth - cardPaddingH * 2;
@@ -110,16 +114,17 @@ const SelectWells: React.FC<Props> = ({
         {...(onOpenHistory && { onOpenHistory })}
       />
 
-      {/* Pop-up de temperatura usando componente TemperaturePill */}
+      {/* Pop-up de temperatura com temperatura em tempo real */}
       <TemperaturePill
-        initialTempC={initialTempC}
+        initialTempC={initialTempC} // Fallback se não houver temperatura do hardware
+        currentTempC={isMonitoring && temperature !== null ? temperature : null} // Passar null quando não está monitorando
         tempLabel={tempLabel}
         tempMessage={tempMessage}
         startExpanded={startExpandedPill}
         initialX={14}
         initialY={58}
         onClose={() => {
-          // Callback opcional se necessário
+          // Callback opcional
         }}
       />
 

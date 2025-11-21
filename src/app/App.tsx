@@ -69,6 +69,7 @@ import type { SampleItem } from '@presentation/screens/PipettingInProgress';
 import type { AmostraResultado } from '@presentation/screens/ResultsScreen';
 import { testDataService } from '@/data/test-data-service';
 import { NavigationProvider } from '@/contexts/NavigationContext';
+import { BluetoothProvider } from '@/contexts/BluetoothContext';
 
 export const App: React.FC = () => {
   const [currentState, setCurrentState] = useState<
@@ -1550,8 +1551,7 @@ export const App: React.FC = () => {
               navigateToState('sampleIdentification');
             }}
             initialTempC={31}
-            tempLabel="TEMPERATURA DO EQUIPAMENTO"
-            tempMessage="O equipamento está sendo aquecido para a execução do teste."
+            tempLabel="TEMP. DO BLOCO"
             startExpandedPill={true}
           />
         );
@@ -1610,8 +1610,8 @@ export const App: React.FC = () => {
         // Calcular duração em segundos a partir do perfil do teste selecionado
         const calculateDuration = (): number => {
           if (selectedTest?.profile?.totalTime) {
-            const { minutes, seconds } = selectedTest.profile.totalTime;
-            return minutes * 60 + seconds;
+            const { minutes } = selectedTest.profile.totalTime;
+            return minutes * 60; // Converter apenas minutos para segundos
           }
           // Fallback: 120 segundos (2 minutos) se não houver perfil
           return 120;
@@ -1958,6 +1958,10 @@ export const App: React.FC = () => {
 
   
 
+  // REMOVIDO ConditionalBluetoothProvider - sempre manter o provider montado
+  // O provider agora gerencia sua própria inicialização e não causa problemas
+  // mesmo em telas que não usam Bluetooth diretamente
+
   // Componente interno que usa hooks do Clerk
   const AppContent: React.FC = () => {
     return (
@@ -1972,10 +1976,11 @@ export const App: React.FC = () => {
     );
   };
 
-
   return (
     <ClerkProvider>
-      <AppContent />
+      <BluetoothProvider>
+        <AppContent />
+      </BluetoothProvider>
     </ClerkProvider>
   );
 };

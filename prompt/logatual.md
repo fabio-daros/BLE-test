@@ -1,0 +1,16 @@
+2025-11-20 21:51:17.512  7111-7111  com.inpunto             com.inpunto                          W  Accessing hidden field Landroid/widget/ScrollView;->mScroller:Landroid/widget/OverScroller; (greylist, reflection, allowed)
+2025-11-20 21:51:19.159  7111-7162  ReactNativeJS           com.inpunto                          E  [Error: Uncaught (in promise, id: 1): "BleError: Unknown error occurred. This is probably a bug! Check reason property."]
+2025-11-20 21:51:19.217  7111-7162  ReactNativeJS           com.inpunto                          E  [Error: Uncaught (in promise, id: 2): "BleError: Unknown error occurred. This is probably a bug! Check reason property."]
+2025-11-20 21:51:19.251  7111-7162  ReactNativeJS           com.inpunto                          E  [Error: Uncaught (in promise, id: 3): "BleError: Unknown error occurred. This is probably a bug! Check reason property."]
+2025-11-20 21:51:19.324  7111-7135  RenderInspector         com.inpunto                          W  DequeueBuffer time out on com.inpunto/com.inpunto.MainActivity, count=1, avg=17 ms, max=17 ms.
+2025-11-20 21:51:19.546  7111-7162  ReactNativeJS           com.inpunto                          E  [Error: Uncaught (in promise, id: 4): "BleError: Unknown error occurred. This is probably a bug! Check reason property."]
+2025-11-20 21:51:21.348  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x0, 165312050, channel '56008ce com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:51:21.456  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x1, 165312160, channel '56008ce com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:51:21.484  7111-7162  ReactNativeJS           com.inpunto                          I  [BLE] === Iniciando refresh de dispositivos ===
+2025-11-20 21:51:21.489  7111-7162  ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_refresh_device_list', { screen: 'HomeWip',
+                                                                                                      action: 'bluetooth_refresh_device_list',
+                                                                                                      timestamp: '2025-11-21T00:51:21.484Z',
+                                                                                                      userName: 'Usuário',
+                                                                                                      hasBackAction: true }
+2025-11-20 21:51:21.497  7111-7162  ReactNativeJS           com.inpunto                          W  '[BLE] Erro ao verificar estado do Bluetooth:', [BleError: Unknown error occurred. This is probably a bug! Check reason property.]
+2025-11-20 21:51:23.613  7111-7162  ReactNativeJS           com.inpunto                          E  [Error: Uncaught (in promise, id: 5): "BleError: Unknown error occurred. This is probably a bug! Check reason property."]

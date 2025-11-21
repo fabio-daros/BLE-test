@@ -1,5 +1,5 @@
 import { logger } from '@services/logging';
-import { TestProfile, TestProfileSnapshot } from '@types/test-profile';
+import { TestProfile, TestProfileSnapshot } from '@/types/test-profile';
 
 export interface ProfileAuditLogger {
   logProfileCreated(profile: TestProfile, userId: string): void;
@@ -35,7 +35,6 @@ class ProfileAuditLoggerImpl implements ProfileAuditLogger {
       testType: profile.testType,
       targetTemperature: profile.targetTemperature,
       totalTimeMinutes: profile.totalTime.minutes,
-      totalTimeSeconds: profile.totalTime.seconds,
       status: profile.status,
       userId,
       timestamp: Date.now(),
@@ -63,7 +62,6 @@ class ProfileAuditLoggerImpl implements ProfileAuditLogger {
       testType: profile.testType,
       targetTemperature: profile.targetTemperature,
       totalTimeMinutes: profile.totalTime.minutes,
-      totalTimeSeconds: profile.totalTime.seconds,
       userId,
       timestamp: Date.now(),
     });
@@ -100,7 +98,6 @@ class ProfileAuditLoggerImpl implements ProfileAuditLogger {
       testType: snapshot.testType,
       targetTemperature: snapshot.targetTemperature,
       totalTimeMinutes: snapshot.totalTime.minutes,
-      totalTimeSeconds: snapshot.totalTime.seconds,
       testExecutionId: snapshot.testExecutionId,
       userId,
       timestamp: Date.now(),
@@ -161,12 +158,9 @@ export const getProfileChanges = (
     );
   }
 
-  if (
-    oldProfile.totalTime.minutes !== newProfile.totalTime.minutes ||
-    oldProfile.totalTime.seconds !== newProfile.totalTime.seconds
-  ) {
-    const oldTime = `${oldProfile.totalTime.minutes}:${oldProfile.totalTime.seconds.toString().padStart(2, '0')}`;
-    const newTime = `${newProfile.totalTime.minutes}:${newProfile.totalTime.seconds.toString().padStart(2, '0')}`;
+  if (oldProfile.totalTime.minutes !== newProfile.totalTime.minutes) {
+    const oldTime = `${oldProfile.totalTime.minutes}min`;
+    const newTime = `${newProfile.totalTime.minutes}min`;
     changes.push(`Tempo: ${oldTime} → ${newTime}`);
   }
 

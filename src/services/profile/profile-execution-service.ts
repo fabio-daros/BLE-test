@@ -1,5 +1,5 @@
-import { HardwareService } from './service';
-import { TestProfile, TestProfileSnapshot } from '@types/test-profile';
+import { HardwareService } from '@services/hardware';
+import { TestProfile } from '@/types/test-profile';
 import { memoryTestProfileRepository } from '@data/storage';
 import { useNavigationLogger } from '@services/logging';
 
@@ -50,7 +50,7 @@ class ProfileExecutionServiceImpl implements ProfileExecutionService {
         userId,
         snapshotId: snapshot.id,
         temperature: profile.targetTemperature,
-        time: `${profile.totalTime.minutes}:${profile.totalTime.seconds.toString().padStart(2, '0')}`,
+        time: `${profile.totalTime.minutes}min`,
       });
     } catch (error) {
       console.error('Erro ao executar perfil:', error);
@@ -81,8 +81,7 @@ class ProfileExecutionServiceImpl implements ProfileExecutionService {
     }
 
     // Verificar se o tempo está dentro dos limites
-    const totalMinutes =
-      profile.totalTime.minutes + profile.totalTime.seconds / 60;
+    const totalMinutes = profile.totalTime.minutes; // Removido conversão com seconds
     if (totalMinutes < 1 || totalMinutes > 120) {
       errors.push(`Tempo fora dos limites: ${totalMinutes} min`);
     }
@@ -100,6 +99,10 @@ class ProfileExecutionServiceImpl implements ProfileExecutionService {
 
   private prepareHardwareData(profile: TestProfile) {
     // Converter dados do perfil para o formato esperado pelo hardware
+    // Mapear 'custom' para 'none' pois o hardware não aceita 'custom'
+    const hardwareTestType: 'cinomose' | 'ibv_geral' | 'ibv_especifico' | 'none' = 
+      profile.testType === 'custom' ? 'none' : profile.testType;
+    
     return {
       batteryPercent: 100, // Será atualizado pelo hardware
       blockTemperatureC: profile.targetTemperature,
@@ -110,7 +113,7 @@ class ProfileExecutionServiceImpl implements ProfileExecutionService {
       equipmentStatus: 'standby' as const,
       analysisElapsed: { hours: 0, minutes: 0 },
       preTestStatus: 'not_started' as const,
-      testType: profile.testType,
+      testType: hardwareTestType, // Usar a variável convertida
     };
   }
 }

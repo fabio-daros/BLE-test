@@ -16,6 +16,7 @@ import { memoryTestProfileRepository } from '@data/storage';
 import { TestProfile } from '@/types/test-profile';
 import { useNavigationLogger } from '@services/logging';
 import { colors } from '../theme';
+import { useTemperatureBlockConfig } from '@/services/bluetooth/temperatureBlock';
 
 export type TestKey = 'cinomose' | 'ibv_geral' | 'ibv_especifico' | 'custom';
 
@@ -60,6 +61,9 @@ const AvailableTests: React.FC<Props> = ({
     additionalContext: { hasProfileIntegration: true },
   });
 
+  // Hook para enviar configuração ao hardware - lógica separada da UI
+  const { sendProfileConfig, isSending } = useTemperatureBlockConfig();
+
   // Função para converter perfis ativos em TestItems
   const convertProfilesToTestItems = (
     activeProfiles: TestProfile[]
@@ -77,11 +81,9 @@ const AvailableTests: React.FC<Props> = ({
       };
 
       // Formatar tempo de incubação
-      const formatIncubation = (minutes: number, seconds: number): string => {
-        if (minutes === 0 && seconds === 0) return '0min';
-        if (minutes > 0 && seconds === 0) return `${minutes}min`;
-        if (minutes === 0 && seconds > 0) return `${seconds}s`;
-        return `${minutes}min ${seconds}s`;
+      const formatIncubation = (minutes: number): string => {
+        if (minutes === 0) return '0min';
+        return `${minutes}min`;
       };
 
       return {
@@ -89,10 +91,7 @@ const AvailableTests: React.FC<Props> = ({
         key: profile.testType as TestKey,
         label: getLabel(profile.testType, profile.name),
         temperatureC: profile.targetTemperature,
-        incubation: formatIncubation(
-          profile.totalTime.minutes,
-          profile.totalTime.seconds
-        ),
+        incubation: formatIncubation(profile.totalTime.minutes),
         activeProfile: profile,
       };
     });
@@ -153,20 +152,71 @@ const AvailableTests: React.FC<Props> = ({
     }
   };
 
-  const canConfirm = useMemo(() => !!selected, [selected]);
+  const canConfirm = useMemo(() => !!selected && !isSending, [selected, isSending]);
 
-  const confirm = () => {
-    if (!selected) return;
+  // Função confirm - agora muito mais limpa usando o hook
+  const confirm = async () => {
+    if (!selected || isSending) {
+      return;
+    }
 
     const selectedTest = tests.find(t => t.id === selected);
-    if (selectedTest?.activeProfile) {
-      onConfirmSelection?.(selectedTest.key, selectedTest.activeProfile);
-      logUserAction('test_confirmed_with_profile', {
-        testType: selectedTest.key,
-        profileId: selectedTest.activeProfile.id,
-        profileName: selectedTest.activeProfile.name,
-      });
+    if (!selectedTest?.activeProfile) {
+      return;
     }
+
+    const profile = selectedTest.activeProfile;
+
+    console.log('[AvailableTests] ========== CONFIRM CLICADO ==========');
+    console.log('[AvailableTests] Perfil selecionado:', profile.name);
+    
+    // Enviar configuração ao hardware usando o hook
+    const configSent = await sendProfileConfig(profile);
+    
+    if (!configSent) {
+      console.warn('[AvailableTests] ⚠️ Configuração não foi enviada');
+      Alert.alert(
+        'Configuração não enviada',
+        'Não foi possível enviar a configuração ao equipamento. O hardware não emitirá sinal sonoro. Deseja continuar mesmo assim?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Continuar',
+            onPress: () => {
+              onConfirmSelection?.(selectedTest.key, profile);
+              logUserAction('test_confirmed_with_profile', {
+                testType: selectedTest.key,
+                profileId: profile.id,
+                profileName: profile.name,
+                configSent: false,
+              });
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    // Configuração enviada com sucesso
+    console.log('[AvailableTests] ✅ Configuração enviada! Confirmando seleção...');
+    
+    // Pequeno delay para garantir que o hardware processou
+    await new Promise<void>(resolve => setTimeout(resolve, 200));
+
+    onConfirmSelection?.(selectedTest.key, profile);
+    logUserAction('test_confirmed_with_profile', {
+      testType: selectedTest.key,
+      profileId: profile.id,
+      profileName: profile.name,
+      configSent: true,
+      temperature: profile.targetTemperature,
+      reactionTime: profile.totalTime.minutes, // Removido conversão com seconds
+    });
+    
+    console.log('[AvailableTests] ✅ Seleção confirmada com sucesso!');
   };
 
   return (
@@ -184,8 +234,12 @@ const AvailableTests: React.FC<Props> = ({
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
         showsVerticalScrollIndicator={true}
         nestedScrollEnabled={true}
+        indicatorStyle="default"
+        bounces={true}
+        alwaysBounceVertical={false} // Mudar para false - só bounce se houver conteúdo para rolar
       >
         {/* Título */}
         <View style={styles.titleWrap}>
@@ -287,8 +341,12 @@ const ExpandableOption = memo(function ExpandableOption({
           </View>
           <View style={styles.pill}>
             <Text style={styles.pillText}>
-              Tempo: {item.activeProfile.totalTime.minutes}:
-              {item.activeProfile.totalTime.seconds.toString().padStart(2, '0')}
+              Tempo: {item.activeProfile.totalTime.minutes}min
+            </Text>
+          </View>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>
+              Tipo: {item.activeProfile.hardwareTestType === 'colorimetric' ? 'Colorimétrico' : 'Fluorimétrico'}
             </Text>
           </View>
         </View>
@@ -301,6 +359,16 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    paddingBottom: BOTTOM_GUARD,
+    // REMOVER flexGrow completamente - ele impede o scroll!
+    // O conteúdo deve crescer naturalmente sem flexGrow
   },
 
   // decorativos
@@ -325,10 +393,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     transform: [{ rotate: '10deg' }],
     opacity: 0.35,
-  },
-
-  scrollContent: {
-    paddingBottom: BOTTOM_GUARD,
   },
 
   // título

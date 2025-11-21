@@ -33,6 +33,7 @@ interface Props {
   devices?: DeviceListItem[];
   scanning?: boolean;
   connectingDeviceId?: string | null;
+  connectedDeviceId?: string | null; // ID do dispositivo conectado
   infoMessage?: string | null;
   errorMessage?: string | null;
   onSelectDevice?: (deviceId: string) => void;
@@ -48,6 +49,7 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
   devices = [],
   scanning = false,
   connectingDeviceId = null,
+  connectedDeviceId = null,
   infoMessage = null,
   errorMessage = null,
   onSelectDevice,
@@ -70,7 +72,8 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
     item,
   }: ListRenderItemInfo<DeviceListItem>): React.ReactElement => {
     const isConnecting = connectingDeviceId === item.id;
-    const disabled = loading || isConnecting;
+    const isConnected = connectedDeviceId === item.id;
+    const disabled = loading || isConnecting || isConnected;
     const handlePress = () => {
       if (!disabled && onSelectDevice) {
         onSelectDevice(item.id);
@@ -82,6 +85,7 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
         style={[
           styles.deviceItem,
           isConnecting && styles.deviceItemConnecting,
+          isConnected && styles.deviceItemConnected,
           disabled && styles.deviceItemDisabled,
         ]}
         onPress={handlePress}
@@ -93,13 +97,6 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
             <Text style={styles.deviceName} numberOfLines={1}>
               {item.name}
             </Text>
-            {item.type && (
-              <View style={[styles.deviceTypeBadge, styles.deviceTypeBadgeBle]}>
-                <Text style={[styles.deviceTypeText, styles.deviceTypeTextBle]}>
-                  BLE
-                </Text>
-              </View>
-            )}
           </View>
           {typeof item.rssi === 'number' && (
             <Text style={styles.deviceSignal}>{`${item.rssi} dBm`}</Text>
@@ -108,6 +105,8 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
         <View style={styles.deviceStatus}>
           {isConnecting ? (
             <ActivityIndicator size="small" color={colors.gold} />
+          ) : isConnected ? (
+            <Text style={styles.deviceStatusLabelConnected}>Desconectar</Text>
           ) : (
             <Text style={styles.deviceStatusLabel}>Conectar</Text>
           )}
@@ -125,7 +124,11 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
       statusBarTranslucent
     >
       {/* Backdrop que bloqueia interação fora do modal */}
-      <TouchableWithoutFeedback onPress={onClose}>
+      {/* Só permite fechar ao clicar fora quando estiver no modo 'request' (Permissão necessária) */}
+      <TouchableWithoutFeedback 
+        onPress={mode === 'request' && !loading ? onClose : undefined}
+        disabled={mode !== 'request' || loading}
+      >
         <View style={styles.backdrop}>
           <View style={styles.cardWrapper} pointerEvents="box-none">
             <TouchableWithoutFeedback>
@@ -158,13 +161,6 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                     {infoMessage && (
                       <View style={styles.statusInfo}>
                         <Text style={styles.statusInfoText}>{infoMessage}</Text>
-                        {scanning && (
-                          <ActivityIndicator
-                            size="small"
-                            color={colors.gold}
-                            style={styles.statusIndicator}
-                          />
-                        )}
                       </View>
                     )}
 
@@ -220,13 +216,9 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                         activeOpacity={0.85}
                         disabled={scanning || loading}
                       >
-                        {scanning ? (
-                          <ActivityIndicator size="small" color={colors.gold} />
-                        ) : (
-                          <Text style={styles.secondaryText}>
-                            Atualizar lista
-                          </Text>
-                        )}
+                        <Text style={styles.secondaryText}>
+                          Atualizar lista
+                        </Text>
                       </TouchableOpacity>
                     )}
                   </>
@@ -247,13 +239,6 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                       Para continuar, é necessário conceder a permissão para
                       ativar a conexão.
                     </Text>
-                    {loading && (
-                      <ActivityIndicator
-                        size="small"
-                        color={colors.gold}
-                        style={styles.statusIndicator}
-                      />
-                    )}
                   </>
                 )}
 
@@ -270,13 +255,9 @@ export const PopUpRequestBluetooth: React.FC<Props> = ({
                     accessibilityLabel={primaryButtonLabel}
                     disabled={loading}
                   >
-                    {loading ? (
-                      <ActivityIndicator size="small" color={colors.white} />
-                    ) : (
-                      <Text style={styles.primaryText}>
-                        {primaryButtonLabel}
-                      </Text>
-                    )}
+                    <Text style={styles.primaryText}>
+                      {primaryButtonLabel}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -399,6 +380,10 @@ const styles = StyleSheet.create({
   deviceItemConnecting: {
     backgroundColor: colors.goldBackground,
   },
+  deviceItemConnected: {
+    backgroundColor: colors.goldBackgroundAlt,
+    opacity: 0.8,
+  },
   deviceItemDisabled: {
     opacity: 0.6,
   },
@@ -446,6 +431,11 @@ const styles = StyleSheet.create({
   deviceStatusLabel: {
     fontSize: 14,
     color: colors.gold,
+    fontWeight: '600',
+  },
+  deviceStatusLabelConnected: {
+    fontSize: 14,
+    color: colors.textMuted,
     fontWeight: '600',
   },
   deviceSeparator: {
