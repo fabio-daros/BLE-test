@@ -105,13 +105,15 @@ export const HomeWip: React.FC<Props> = ({
         : parseInt(Platform.Version, 10)
       : null;
 
+  // Atualizar bleManagerRef sempre que contextBleManager mudar
   useEffect(() => {
-    isMountedRef.current = true;
-    
-    // Atualizar ref do BleManager com o do contexto
     if (contextBleManager) {
       bleManagerRef.current = contextBleManager;
     }
+  }, [contextBleManager]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
     
     // IMPORTANTE: Não resetar hasInitialPopupShownRef se já houver dispositivo conectado
     // Isso evita que o popup apareça novamente quando o usuário volta para a tela
@@ -442,18 +444,9 @@ export const HomeWip: React.FC<Props> = ({
 
   const startBluetoothScan = useCallback(
     async (options?: { autoOpenSettingsOnPowerOff?: boolean }) => {
-      // Verificações básicas
-      if (!contextBleManagerAvailable || !bleManagerRef.current) {
-        setBluetoothErrorMessage(
-          'O módulo de Bluetooth não está disponível neste ambiente.'
-        );
-        setBluetoothPopupMode('error');
-        setBluetoothPopupVisible(true);
-        return;
-      }
-
-      const manager = bleManagerRef.current;
-      if (!manager) {
+      // Verificações básicas - usar contextBleManager diretamente
+      const manager = contextBleManager || bleManagerRef.current;
+      if (!contextBleManagerAvailable || !manager) {
         setBluetoothErrorMessage(
           'O módulo de Bluetooth não está disponível neste ambiente.'
         );
@@ -768,8 +761,12 @@ export const HomeWip: React.FC<Props> = ({
       logUserAction('bluetooth_permission_granted');
       setIsRequestingBluetooth(false);
       
-      if (contextBleManagerAvailable && bleManagerRef.current) {
-        const manager = bleManagerRef.current;
+      // Usar contextBleManager diretamente em vez de bleManagerRef.current
+      // pois o ref pode não estar atualizado ainda
+      const manager = contextBleManager || bleManagerRef.current;
+      console.log('[BLE HomeWip] handleBluetoothPermission - manager disponível:', !!manager, 'contextBleManagerAvailable:', contextBleManagerAvailable);
+      
+      if (contextBleManagerAvailable && manager) {
         
         // Verificar estado do Bluetooth (igual ao enableBluetooth do BluetoothConnectionScreen)
         try {
@@ -970,7 +967,8 @@ export const HomeWip: React.FC<Props> = ({
     console.log('[BLE] === Iniciando refresh de dispositivos ===');
     logUserAction('bluetooth_refresh_device_list', {});
     
-    const manager = bleManagerRef.current;
+    // Usar contextBleManager diretamente ou bleManagerRef como fallback
+    const manager = contextBleManager || bleManagerRef.current;
     if (!manager) {
       setBluetoothErrorMessage(
         'O módulo de Bluetooth não está disponível neste ambiente.'
