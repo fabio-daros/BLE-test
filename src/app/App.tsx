@@ -1959,10 +1959,24 @@ export const App: React.FC = () => {
 
   
 
+  // Componente condicional que só disponibiliza BluetoothProvider para telas que precisam
+  const ConditionalBluetoothProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // Telas que NÃO devem ter acesso ao contexto Bluetooth
+    const screensWithoutBluetooth: string[] = ['login', 'admin'];
+    
+    if (screensWithoutBluetooth.includes(currentState)) {
+      // Renderizar sem BluetoothProvider
+      return <>{children}</>;
+    }
+    
+    // Renderizar com BluetoothProvider para todas as outras telas
+    return <BluetoothProvider>{children}</BluetoothProvider>;
+  };
+
   // Componente interno que usa hooks do Clerk
   const AppContent: React.FC = () => {
     return (
-      <BluetoothProvider>
+      <ConditionalBluetoothProvider>
         <NavigationProvider
           currentState={currentState as any}
           previousState={previousState}
@@ -1971,7 +1985,7 @@ export const App: React.FC = () => {
         >
           <View style={styles.container}>{renderScreen()}</View>
         </NavigationProvider>
-      </BluetoothProvider>
+      </ConditionalBluetoothProvider>
     );
   };
 

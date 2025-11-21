@@ -55,19 +55,39 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
   const bluetoothStateSubscriptionRef = useRef<Subscription | null>(null);
   const isMountedRef = useRef(true);
 
-  // Inicializar BleManager
+  // Inicializar BleManager (lazy initialization - só quando necessário)
   useEffect(() => {
     isMountedRef.current = true;
 
-    try {
-      const manager = new BleManager();
-      bleManagerRef.current = manager;
-      setBleManagerAvailable(true);
-      logUserAction('bluetooth_manager_initialized', { context: 'BluetoothProvider' });
+    // Inicializar BleManager de forma segura
+    const initializeBleManager = () => {
+      try {
+        const manager = new BleManager();
+        bleManagerRef.current = manager;
+        setBleManagerAvailable(true);
+        logUserAction('bluetooth_manager_initialized', { context: 'BluetoothProvider' });
+        return manager;
+      } catch (error) {
+        console.error('[BLE Context] Erro ao inicializar BleManager:', error);
+        bleManagerRef.current = null;
+        setBleManagerAvailable(false);
+        logUserAction('bluetooth_manager_init_failed', {
+          message: (error as Error).message,
+          context: 'BluetoothProvider',
+        });
+        return null;
+      }
+    };
+
+    const manager = initializeBleManager();
+    if (!manager) {
+      return; // Se não conseguiu inicializar, não continua
+    }
 
       // Registrar listener de estado do Bluetooth
       if (!bluetoothStateSubscriptionRef.current) {
         try {
+          // Tentar registrar listener sem emitir estado inicial primeiro (mais seguro)
           const subscription = manager.onStateChange(
             (state: BleState) => {
               if (!isMountedRef.current) return;
@@ -81,51 +101,22 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
                 setConnectedDeviceState(null);
               }
             },
-            true,
+            false, // Começar com false para evitar erro na inicialização
           );
           bluetoothStateSubscriptionRef.current = subscription;
           logUserAction('bluetooth_state_listener_registered', {
-            withInitialState: true,
+            withInitialState: false,
             context: 'BluetoothProvider',
           });
         } catch (error: any) {
-          console.warn(
-            '[BLE Context] Erro ao registrar listener com true, tentando com false:',
+          console.error(
+            '[BLE Context] Erro ao registrar listener de estado do Bluetooth:',
             error,
           );
-          try {
-            const subscription = manager.onStateChange(
-              (state: BleState) => {
-                if (!isMountedRef.current) return;
-
-                console.log('[BLE Context] Estado do Bluetooth mudou para:', state);
-                logUserAction('bluetooth_state_changed', {
-                  state,
-                  context: 'BluetoothProvider',
-                });
-
-                if (state === 'PoweredOff') {
-                  console.log('[BLE Context] Bluetooth desligado, limpando dispositivo conectado');
-                  setConnectedDeviceState(null);
-                }
-              },
-              false,
-            );
-            bluetoothStateSubscriptionRef.current = subscription;
-            logUserAction('bluetooth_state_listener_registered', {
-              withInitialState: false,
-              context: 'BluetoothProvider',
-            });
-          } catch (fallbackError: any) {
-            console.error(
-              '[BLE Context] Erro ao registrar listener com false também:',
-              fallbackError,
-            );
-            logUserAction('bluetooth_state_listener_critical_error', {
-              error: fallbackError?.message,
-              context: 'BluetoothProvider',
-            });
-          }
+          logUserAction('bluetooth_state_listener_critical_error', {
+            error: error?.message || 'Erro desconhecido',
+            context: 'BluetoothProvider',
+          });
         }
       }
 
@@ -168,12 +159,20 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
         }
       }, 100);
     } catch (error) {
+      console.error('[BLE Context] Erro ao inicializar BleManager:', error);
       bleManagerRef.current = null;
       setBleManagerAvailable(false);
-      logUserAction('bluetooth_manager_init_failed', {
-        message: (error as Error).message,
-        context: 'BluetoothProvider',
-      });
+      // Não logar erro se for um erro conhecido (ex: permissões não concedidas ainda)
+      if (error && typeof error === 'object' && 'message' in error) {
+        const errorMessage = (error as Error).message;
+        // Só logar se não for um erro esperado
+        if (!errorMessage.includes('permission') && !errorMessage.includes('Permission')) {
+          logUserAction('bluetooth_manager_init_failed', {
+            message: errorMessage,
+            context: 'BluetoothProvider',
+          });
+        }
+      }
     }
 
     return () => {
