@@ -99,7 +99,12 @@ export const HomeWip: React.FC<Props> = ({
 
   useEffect(() => {
     isMountedRef.current = true;
-    hasInitialPopupShownRef.current = false;
+    
+    // IMPORTANTE: Não resetar hasInitialPopupShownRef se já houver dispositivo conectado
+    // Isso evita que o popup apareça novamente quando o usuário volta para a tela
+    if (!connectedDevice) {
+      hasInitialPopupShownRef.current = false;
+    }
     
     try {
       const manager = new BleManager();
@@ -124,18 +129,19 @@ export const HomeWip: React.FC<Props> = ({
 
     // Mostrar popup automaticamente após inicializar (apenas uma vez)
     // Só mostrar se o popup ainda não estiver visível ou se não foi mostrado antes
+    // CRÍTICO: NUNCA mostrar o popup se já houver um dispositivo conectado
     const showPopupTimer = setTimeout(() => {
       // Verificar se ainda deve mostrar o popup inicial
       // Não mostrar se:
       // 1. Componente foi desmontado
       // 2. Popup inicial já foi mostrado/interagido
       // 3. Popup já está visível (pode estar em outro modo)
-      // 4. Há um dispositivo conectado (não mostrar popup inicial se já estiver conectado)
+      // 4. Há um dispositivo conectado (NUNCA mostrar popup inicial se já estiver conectado)
       if (
         isMountedRef.current &&
         !hasInitialPopupShownRef.current &&
         !isBluetoothPopupVisible &&
-        !connectedDevice // Não mostrar popup inicial se já houver dispositivo conectado
+        !connectedDevice // CRÍTICO: Não mostrar popup inicial se já houver dispositivo conectado
       ) {
         // Verificar o modo atual antes de definir
         setBluetoothPopupMode(currentMode => {
@@ -196,7 +202,7 @@ export const HomeWip: React.FC<Props> = ({
       // Isso é feito em um useEffect separado com dependências vazias []
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBluetoothPopupVisible, logUserAction]);
+  }, [isBluetoothPopupVisible, logUserAction, connectedDevice]);
 
   // useEffect separado para cleanup apenas no unmount real
   useEffect(() => {
@@ -800,7 +806,9 @@ export const HomeWip: React.FC<Props> = ({
                         scanTimeoutRef.current = null;
                       }
                     }
+                    // Limpar dispositivo conectado quando o Bluetooth é desligado
                     if (isMountedRef.current) {
+                      setConnectedDevice(null);
                       setBluetoothErrorMessage(
                         'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
                       );
@@ -848,7 +856,9 @@ export const HomeWip: React.FC<Props> = ({
                           scanTimeoutRef.current = null;
                         }
                       }
+                      // Limpar dispositivo conectado quando o Bluetooth é desligado
                       if (isMountedRef.current) {
+                        setConnectedDevice(null);
                         setBluetoothErrorMessage(
                           'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
                         );
