@@ -89,6 +89,7 @@ export const HomeWip: React.FC<Props> = ({
   const isMountedRef = useRef(true);
   const isScanningRef = useRef(false);
   const scanStartAttemptRef = useRef(false);
+  const connectedDeviceRef = useRef<{ id: string; name: string } | null>(null);
 
   const androidVersion =
     Platform.OS === 'android'
@@ -100,10 +101,20 @@ export const HomeWip: React.FC<Props> = ({
   useEffect(() => {
     isMountedRef.current = true;
     
+    // Restaurar dispositivo conectado do ref se existir
+    if (connectedDeviceRef.current && !connectedDevice) {
+      console.log('[BLE] Restaurando dispositivo conectado do ref:', connectedDeviceRef.current);
+      setConnectedDevice(connectedDeviceRef.current);
+      hasInitialPopupShownRef.current = true; // Marcar como já mostrado para não exibir popup
+    }
+    
     // IMPORTANTE: Não resetar hasInitialPopupShownRef se já houver dispositivo conectado
     // Isso evita que o popup apareça novamente quando o usuário volta para a tela
-    if (!connectedDevice) {
+    if (!connectedDevice && !connectedDeviceRef.current) {
       hasInitialPopupShownRef.current = false;
+    } else {
+      // Se há dispositivo conectado (no estado ou no ref), não mostrar popup
+      hasInitialPopupShownRef.current = true;
     }
     
     try {
@@ -111,6 +122,52 @@ export const HomeWip: React.FC<Props> = ({
       bleManagerRef.current = manager;
       setBleManagerAvailable(true);
       logUserAction('bluetooth_manager_initialized');
+      
+      // Verificar se há dispositivos conectados quando o componente é montado
+      // Isso ajuda a restaurar o estado após navegação entre telas
+      const checkConnectedDevices = async () => {
+        try {
+          // Se há um dispositivo no ref, tentar verificar se ainda está conectado
+          if (connectedDeviceRef.current && manager) {
+            try {
+              // Tentar obter o dispositivo pelo ID (método pode não estar tipado mas existe)
+              const devices = await (manager as any).devices([connectedDeviceRef.current.id]);
+              if (devices && devices.length > 0) {
+                const device = devices[0];
+                const isConnected = await device.isConnected();
+                if (isConnected) {
+                  console.log('[BLE] Dispositivo ainda está conectado:', connectedDeviceRef.current.name);
+                  if (!connectedDevice) {
+                    setConnectedDevice(connectedDeviceRef.current);
+                    hasInitialPopupShownRef.current = true;
+                  }
+                } else {
+                  console.log('[BLE] Dispositivo não está mais conectado, limpando ref');
+                  connectedDeviceRef.current = null;
+                  setConnectedDevice(null);
+                }
+              } else {
+                console.log('[BLE] Dispositivo não encontrado, limpando ref');
+                connectedDeviceRef.current = null;
+                setConnectedDevice(null);
+              }
+            } catch (checkError) {
+              console.warn('[BLE] Erro ao verificar conexão do dispositivo:', checkError);
+              // Se houver erro, manter o ref (pode ser que o método não exista ou dispositivo ainda esteja conectado)
+              // Não limpar o ref para evitar perder a informação
+            }
+          }
+        } catch (error) {
+          console.warn('[BLE] Erro ao verificar dispositivos conectados:', error);
+        }
+      };
+      
+      // Verificar dispositivos conectados após um pequeno delay para garantir que o manager está pronto
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          checkConnectedDevices();
+        }
+      }, 100);
     } catch (error) {
       bleManagerRef.current = null;
       setBleManagerAvailable(false);
@@ -141,7 +198,8 @@ export const HomeWip: React.FC<Props> = ({
         isMountedRef.current &&
         !hasInitialPopupShownRef.current &&
         !isBluetoothPopupVisible &&
-        !connectedDevice // CRÍTICO: Não mostrar popup inicial se já houver dispositivo conectado
+        !connectedDevice && // CRÍTICO: Não mostrar popup inicial se já houver dispositivo conectado
+        !connectedDeviceRef.current // CRÍTICO: Também verificar o ref
       ) {
         // Verificar o modo atual antes de definir
         setBluetoothPopupMode(currentMode => {
@@ -858,6 +916,7 @@ export const HomeWip: React.FC<Props> = ({
                       }
                       // Limpar dispositivo conectado quando o Bluetooth é desligado
                       if (isMountedRef.current) {
+                        connectedDeviceRef.current = null;
                         setConnectedDevice(null);
                         setBluetoothErrorMessage(
                           'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
@@ -1078,7 +1137,10 @@ export const HomeWip: React.FC<Props> = ({
           bleDevice.localName?.trim() ||
           'Equipamento';
 
-        setConnectedDevice({ id: bleDevice.id, name: deviceName });
+        const deviceInfo = { id: bleDevice.id, name: deviceName };
+        setConnectedDevice(deviceInfo);
+        // Armazenar no ref para persistir entre remontagens do componente
+        connectedDeviceRef.current = deviceInfo;
         setBluetoothInfoMessage('Equipamento conectado com sucesso!');
         logUserAction('bluetooth_ble_device_connected', {
           deviceId: bleDevice.id,

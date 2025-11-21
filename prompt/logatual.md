@@ -1,38 +1,43 @@
-2025-11-20 20:47:17.553 29430-29676 ReactNativeJS           com.inpunto                          I  '[BLE] scanStopRef.current existe:', false
-2025-11-20 20:47:17.626 29430-29676 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_device_connection_started', { screen: 'HomeWip',
-                                                                                                      action: 'bluetooth_device_connection_started',
-                                                                                                      timestamp: '2025-11-20T23:47:17.554Z',
-                                                                                                      deviceId: 'EC:E3:34:C9:9A:CE',
-                                                                                                      deviceType: 'ble',
-                                                                                                      userName: 'Usuário',
-                                                                                                      hasBackAction: true }
-2025-11-20 20:47:17.628 29430-29676 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_manager_initialized', { screen: 'HomeWip',
+2025-11-20 21:08:04.356  1692-9090  WindowManager           system_server                        V  Orientation start waiting for draw, mDrawState=DRAW_PENDING in Window{8e47053 mode=0 rootTaskId=1027 u0 com.inpunto/com.inpunto.MainActivity}, surfaceController Surface(name=com.inpunto/com.inpunto.MainActivity)/@0xfa61689
+2025-11-20 21:08:04.364  1692-9090  WindowManager           system_server                        D  Input focus has changed to Window{8e47053 mode=0 rootTaskId=1027 u0 com.inpunto/com.inpunto.MainActivity}
+2025-11-20 21:08:04.383  1692-3952  MIUIInput               system_server                        D  [FoucsChange]: Display  0 FocusedWindow From Window{d999b09 mode=0 rootTaskId=1027 u0 com.inpunto/com.inpunto.MainActivity}(1,0)  to null(0,0)
+2025-11-20 21:08:04.416  1692-3952  MIUIInput               system_server                        D  [FoucsChange]: Display  0 FocusedWindow From null(0,0)  to Window{8e47053 mode=0 rootTaskId=1027 u0 com.inpunto/com.inpunto.MainActivity}(1,1)
+2025-11-20 21:08:04.477  3841-3841  GoogleInpu...hodService com...gle.android.inputmethod.latin  I  GoogleInputMethodService.onStartInput():1347 onStartInput(EditorInfo{EditorInfo{packageName=com.inpunto, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=-1, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+2025-11-20 21:08:08.438  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x0, 162719142, channel '8e47053 com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:08:08.526  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x1, 162719229, channel '8e47053 com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:08:10.386  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x0, 162721088, channel '8e47053 com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:08:10.480  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x1, 162721183, channel '8e47053 com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:08:10.534 30554-30629 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_manager_initialized', { screen: 'HomeWip',
                                                                                                       action: 'bluetooth_manager_initialized',
-                                                                                                      timestamp: '2025-11-20T23:47:17.624Z',
+                                                                                                      timestamp: '2025-11-21T00:08:10.531Z',
                                                                                                       userName: 'Usuário',
                                                                                                       hasBackAction: true }
-2025-11-20 20:47:17.719 29430-29713 BluetoothGatt           com.inpunto                          D  connect() - device: EC:E3:34:C9:9A:CE, auto: false
-2025-11-20 20:47:17.719 29430-29713 BluetoothGatt           com.inpunto                          D  registerApp()
-2025-11-20 20:47:17.719 29430-29713 BluetoothGatt           com.inpunto                          D  registerApp() - UUID=67da068a-d58c-48ad-9803-1b48d8ad781c
-2025-11-20 20:47:17.722 29430-29452 BluetoothGatt           com.inpunto                          D  onClientRegistered() - status=0 clientIf=9
-2025-11-20 20:47:18.115  2356-2468  BtGatt.GattService      com.android.bluetooth                D  bleAppName = com.inpunto#
-2025-11-20 20:47:18.116 29430-29452 BluetoothGatt           com.inpunto                          D  onClientConnectionState() - status=0 clientIf=9 device=EC:E3:34:C9:9A:CE
-2025-11-20 20:47:18.171 29430-29713 BluetoothGatt           com.inpunto                          D  discoverServices() - device: EC:E3:34:C9:9A:CE
-2025-11-20 20:47:18.646 29430-29452 BluetoothGatt           com.inpunto                          D  onConnectionUpdated() - Device=EC:E3:34:C9:9A:CE interval=6 latency=0 timeout=500 status=0
-2025-11-20 20:47:18.980 29430-29452 BluetoothGatt           com.inpunto                          D  onSearchComplete() = Device=EC:E3:34:C9:9A:CE Status=0
-2025-11-20 20:47:18.995 29430-29676 ReactNativeJS           com.inpunto                          I  [BLE] Agendando fechamento do popup em 300ms...
-2025-11-20 20:47:18.998 29430-29676 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_ble_device_connected', { screen: 'HomeWip',
-                                                                                                      action: 'bluetooth_ble_device_connected',
-                                                                                                      timestamp: '2025-11-20T23:47:18.994Z',
-                                                                                                      deviceId: 'EC:E3:34:C9:9A:CE',
-                                                                                                      deviceName: 'InPunto',
+2025-11-20 21:08:10.540 30554-30629 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_permission_granted', { screen: 'HomeWip',
+                                                                                                      action: 'bluetooth_permission_granted',
+                                                                                                      timestamp: '2025-11-21T00:08:10.537Z',
                                                                                                       userName: 'Usuário',
                                                                                                       hasBackAction: true }
-2025-11-20 20:47:19.077 29430-29676 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_manager_initialized', { screen: 'HomeWip',
+2025-11-20 21:08:10.541 30554-30629 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_state_listener_registered', { screen: 'HomeWip',
+                                                                                                      action: 'bluetooth_state_listener_registered',
+                                                                                                      timestamp: '2025-11-21T00:08:10.538Z',
+                                                                                                      withInitialState: true,
+                                                                                                      userName: 'Usuário',
+                                                                                                      hasBackAction: true }
+2025-11-20 21:08:10.542 30554-30629 ReactNativeJS           com.inpunto                          I  '[BLE] Estado do Bluetooth mudou para:', 'PoweredOn'
+2025-11-20 21:08:10.543 30554-30629 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_state_changed', { screen: 'HomeWip',
+                                                                                                      action: 'bluetooth_state_changed',
+                                                                                                      timestamp: '2025-11-21T00:08:10.542Z',
+                                                                                                      state: 'PoweredOn',
+                                                                                                      userName: 'Usuário',
+                                                                                                      hasBackAction: true }
+2025-11-20 21:08:10.544 30554-30629 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_already_enabled', { screen: 'HomeWip',
+                                                                                                      action: 'bluetooth_already_enabled',
+                                                                                                      timestamp: '2025-11-21T00:08:10.543Z',
+                                                                                                      state: 'PoweredOn',
+                                                                                                      userName: 'Usuário',
+                                                                                                      hasBackAction: true }
+2025-11-20 21:08:10.596 30554-30629 ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_manager_initialized', { screen: 'HomeWip',
                                                                                                       action: 'bluetooth_manager_initialized',
-                                                                                                      timestamp: '2025-11-20T23:47:19.076Z',
+                                                                                                      timestamp: '2025-11-21T00:08:10.595Z',
                                                                                                       userName: 'Usuário',
                                                                                                       hasBackAction: true }
-2025-11-20 20:47:19.094 29430-29452 BluetoothGatt           com.inpunto                          D  onConnectionUpdated() - Device=EC:E3:34:C9:9A:CE interval=36 latency=0 timeout=500 status=0
-2025-11-20 20:47:19.151  1692-9021  PerfShielderService     system_server                        D  com.inpunto|com.inpunto/com.inpunto.MainActivity|197|161457519301794|141|2|2
-2025-11-20 20:47:19.152  3927-12030 MiuiPerfServiceClient   com.miui.daemon                      W  interceptAndQueuing:29430|com.inpunto|197|141|unknown|null|com.inpunto/com.inpunto.MainActivity|161457519301794|Slow handle animation|2
