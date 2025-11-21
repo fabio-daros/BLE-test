@@ -50,6 +50,7 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
   const [connectedDevice, setConnectedDeviceState] = useState<ConnectedDevice | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [bleManagerAvailable, setBleManagerAvailable] = useState(true);
+  const [bleManager, setBleManager] = useState<BleManager | null>(null);
   
   const bleManagerRef = useRef<BleManager | null>(null);
   const bluetoothStateSubscriptionRef = useRef<Subscription | null>(null);
@@ -63,6 +64,7 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
       // Inicializar BleManager de forma segura
       const manager = new BleManager();
       bleManagerRef.current = manager;
+      setBleManager(manager); // Atualizar estado para que o contexto re-renderize
       setBleManagerAvailable(true);
       logUserAction('bluetooth_manager_initialized', { context: 'BluetoothProvider' });
 
@@ -143,6 +145,7 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
     } catch (error) {
       console.error('[BLE Context] Erro ao inicializar BleManager:', error);
       bleManagerRef.current = null;
+      setBleManager(null); // Limpar estado também
       setBleManagerAvailable(false);
       // Não logar erro se for um erro conhecido (ex: permissões não concedidas ainda)
       if (error && typeof error === 'object' && 'message' in error) {
@@ -175,6 +178,7 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
         if (bleManagerRef.current) {
           bleManagerRef.current.destroy();
           bleManagerRef.current = null;
+          setBleManager(null); // Limpar estado também
         }
       } catch (e: any) {
         console.warn('[BLE Context] Erro ao destruir BleManager:', e);
@@ -237,7 +241,7 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
   const value: BluetoothContextValue = {
     connectedDevice,
     isConnecting,
-    bleManager: bleManagerRef.current,
+    bleManager: bleManager, // Usar estado em vez de ref
     bleManagerAvailable,
     setConnectedDevice,
     setConnecting,

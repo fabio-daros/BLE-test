@@ -1,13 +1,20 @@
-2025-11-20 21:19:23.537 31308-31368 ReactNativeJS           com.inpunto                          I  ℹ️ expo-sqlite não está disponível no React Native CLI
-2025-11-20 21:19:23.538 31308-31368 ReactNativeJS           com.inpunto                          I  ℹ️ Versão não disponível - usando repositório em memória
-2025-11-20 21:19:23.540 31308-31368 ReactNativeJS           com.inpunto                          I  === TESTE DE COMPATIBILIDADE SQLITE ===
-2025-11-20 21:19:23.541 31308-31368 ReactNativeJS           com.inpunto                          I  ℹ️ SQLite não está disponível via expo-sqlite
-2025-11-20 21:19:23.542 31308-31368 ReactNativeJS           com.inpunto                          I  ℹ️ O projeto migrou para React Native CLI
-2025-11-20 21:19:23.543 31308-31368 ReactNativeJS           com.inpunto                          I  ℹ️ SQLite será implementado usando react-native-sqlite-storage
-2025-11-20 21:19:23.543 31308-31368 ReactNativeJS           com.inpunto                          I  ℹ️ Atualmente usando repositório em memória como fallback
-2025-11-20 21:19:23.545 31308-31368 ReactNativeJS           com.inpunto                          I  '[sqlite] Iniciando teste SQLite', {}
-2025-11-20 21:19:23.547 31308-31368 ReactNativeJS           com.inpunto                          I  '[sqlite] Resultado do teste SQLite', { result: false }
-2025-11-20 21:19:24.907 31308-31368 ReactNativeJS           com.inpunto                          E  [Error: Uncaught (in promise, id: 0): "BleError: Unknown error occurred. This is probably a bug! Check reason property."]
-2025-11-20 21:19:45.549  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x0, 163416250, channel '254393b com.inpunto/com.inpunto.MainActivity (server)'
-2025-11-20 21:19:45.561 31308-31308 MirrorManager           com.inpunto                          W  this model don't Support
-2025-11-20 21:19:45.618  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x1, 163416321, channel '254393b com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:36:06.528  2134-2426  ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_permission_popup_shown_on_init', { screen: 'HomeWip',
+                                                                                                      action: 'bluetooth_permission_popup_shown_on_init',
+                                                                                                      timestamp: '2025-11-21T00:36:06.521Z',
+                                                                                                      userName: 'Usuário',
+                                                                                                      hasBackAction: true }
+2025-11-20 21:36:06.721  1692-9021  WindowManager           system_server                        V  Orientation start waiting for draw, mDrawState=DRAW_PENDING in Window{3be9c2c mode=0 rootTaskId=1038 u0 com.inpunto/com.inpunto.MainActivity}, surfaceController Surface(name=com.inpunto/com.inpunto.MainActivity)/@0x2d49c8a
+2025-11-20 21:36:06.727  1692-9021  WindowManager           system_server                        D  Input focus has changed to Window{3be9c2c mode=0 rootTaskId=1038 u0 com.inpunto/com.inpunto.MainActivity}
+2025-11-20 21:36:06.752  1692-7753  MIUIInput               system_server                        D  [FoucsChange]: Display  0 FocusedWindow From Window{1cdd1f2 mode=0 rootTaskId=1038 u0 com.inpunto/com.inpunto.MainActivity}(1,0)  to null(0,0)
+2025-11-20 21:36:06.802  1692-7753  MIUIInput               system_server                        D  [FoucsChange]: Display  0 FocusedWindow From null(0,0)  to Window{3be9c2c mode=0 rootTaskId=1038 u0 com.inpunto/com.inpunto.MainActivity}(1,1)
+2025-11-20 21:36:06.856  3841-3841  GoogleInpu...hodService com...gle.android.inputmethod.latin  I  GoogleInputMethodService.onStartInput():1347 onStartInput(EditorInfo{EditorInfo{packageName=com.inpunto, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=-1, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+2025-11-20 21:36:08.617  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x0, 164399319, channel '3be9c2c com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:36:08.685  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x1, 164399389, channel '3be9c2c com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:36:08.776  2134-2426  ReactNativeJS           com.inpunto                          I  '[BLE HomeWip] handleBluetoothPermission - manager disponível:', false, 'contextBleManagerAvailable:', true
+2025-11-20 21:36:08.777  2134-2426  ReactNativeJS           com.inpunto                          I  '[navigation] Ação do usuário: bluetooth_permission_granted', { screen: 'HomeWip',
+                                                                                                      action: 'bluetooth_permission_granted',
+                                                                                                      timestamp: '2025-11-21T00:36:08.775Z',
+                                                                                                      userName: 'Usuário',
+                                                                                                      hasBackAction: true }
+2025-11-20 21:36:10.448  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x0, 164401151, channel '3be9c2c com.inpunto/com.inpunto.MainActivity (server)'
+2025-11-20 21:36:10.533  1692-2223  MIUIInput               system_server                        D  [MotionEvent] publisher action=0x1, 164401237, channel '3be9c2c com.inpunto/com.inpunto.MainActivity (server)'
