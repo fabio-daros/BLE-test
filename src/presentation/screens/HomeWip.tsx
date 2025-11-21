@@ -468,7 +468,19 @@ export const HomeWip: React.FC<Props> = ({
 
       // Verificar estado do Bluetooth
       try {
-        const state = await manager.state();
+        let state: BleState;
+        try {
+          state = await manager.state();
+        } catch (stateError: any) {
+          console.warn('[BLE] Erro ao verificar estado do Bluetooth:', stateError);
+          // Se houver erro, assumir que está desligado para ser mais seguro
+          setBluetoothErrorMessage(
+            'Erro ao verificar estado do Bluetooth. Por favor, verifique se o Bluetooth está ligado e tente novamente.'
+          );
+          setBluetoothPopupMode('error');
+          setBluetoothPopupVisible(true);
+          return;
+        }
         console.log('[BLE] Estado atual do Bluetooth:', state);
         logUserAction('bluetooth_state_checked', { state });
         
@@ -879,8 +891,27 @@ export const HomeWip: React.FC<Props> = ({
             }
           }
           
+          // Aguardar um pouco antes de verificar o estado para garantir que o manager esteja pronto
+          await new Promise<void>(resolve => setTimeout(() => resolve(), 200));
+          
           // Verificar estado atual do Bluetooth
-          const currentState = await manager.state();
+          let currentState: BleState;
+          try {
+            currentState = await manager.state();
+          } catch (stateError: any) {
+            console.warn('[BLE HomeWip] Erro ao verificar estado do Bluetooth:', stateError);
+            // Se houver erro ao verificar estado, assumir que está ligado e mostrar popup de dispositivos
+            // O usuário pode tentar conectar e verá o erro real se houver
+            logUserAction('bluetooth_state_check_error', { 
+              error: stateError?.message || 'Erro desconhecido',
+              action: 'assuming_powered_on'
+            });
+            setBluetoothPopupMode('devices');
+            setBluetoothPopupVisible(true);
+            setBluetoothInfoMessage(null);
+            setBluetoothErrorMessage(null);
+            return;
+          }
           
           if (currentState === 'PoweredOn') {
             // Bluetooth está ligado - apenas mudar para modo 'devices' e mostrar popup
@@ -899,8 +930,13 @@ export const HomeWip: React.FC<Props> = ({
             setBluetoothPopupVisible(true);
           }
         } catch (error: any) {
-          logUserAction('bluetooth_state_check_error', { error: error?.message });
+          console.error('[BLE HomeWip] Erro geral ao processar permissão Bluetooth:', error);
+          logUserAction('bluetooth_state_check_error', { 
+            error: error?.message || 'Erro desconhecido',
+            action: 'general_error'
+          });
           // Em caso de erro, apenas mostrar popup em modo 'devices'
+          // O usuário pode tentar conectar e verá o erro real se houver
           setBluetoothPopupMode('devices');
           setBluetoothPopupVisible(true);
           setBluetoothInfoMessage(null);
@@ -980,7 +1016,18 @@ export const HomeWip: React.FC<Props> = ({
     
     // Verificar estado do Bluetooth (igual ao BluetoothConnectionScreen linha 550-554)
     try {
-      const state = await manager.state();
+      let state: BleState;
+      try {
+        state = await manager.state();
+      } catch (stateError: any) {
+        console.warn('[BLE] Erro ao verificar estado do Bluetooth:', stateError);
+        setBluetoothErrorMessage(
+          'Erro ao verificar estado do Bluetooth. Por favor, verifique se o Bluetooth está ligado e tente novamente.'
+        );
+        setBluetoothPopupMode('error');
+        setBluetoothPopupVisible(true);
+        return;
+      }
       if (state !== 'PoweredOn') {
         setBluetoothErrorMessage(
           'Bluetooth desligado. Por favor, ligue o Bluetooth e tente novamente.'
