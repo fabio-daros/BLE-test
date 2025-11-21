@@ -59,30 +59,12 @@ export const BluetoothProvider: React.FC<BluetoothProviderProps> = ({
   useEffect(() => {
     isMountedRef.current = true;
 
-    // Inicializar BleManager de forma segura
-    const initializeBleManager = () => {
-      try {
-        const manager = new BleManager();
-        bleManagerRef.current = manager;
-        setBleManagerAvailable(true);
-        logUserAction('bluetooth_manager_initialized', { context: 'BluetoothProvider' });
-        return manager;
-      } catch (error) {
-        console.error('[BLE Context] Erro ao inicializar BleManager:', error);
-        bleManagerRef.current = null;
-        setBleManagerAvailable(false);
-        logUserAction('bluetooth_manager_init_failed', {
-          message: (error as Error).message,
-          context: 'BluetoothProvider',
-        });
-        return null;
-      }
-    };
-
-    const manager = initializeBleManager();
-    if (!manager) {
-      return; // Se não conseguiu inicializar, não continua
-    }
+    try {
+      // Inicializar BleManager de forma segura
+      const manager = new BleManager();
+      bleManagerRef.current = manager;
+      setBleManagerAvailable(true);
+      logUserAction('bluetooth_manager_initialized', { context: 'BluetoothProvider' });
 
       // Registrar listener de estado do Bluetooth
       if (!bluetoothStateSubscriptionRef.current) {
