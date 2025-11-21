@@ -1,4 +1,4 @@
-import { bytesToBase64 } from './temperatureBlockProtocol';
+import { bytesToBase64 } from '../core/utils';
 
 export const CONFIGURA_BLOCO_UUID =
   'beb5483e-36e1-4688-b7f5-ea07361b26a8'; // WRITE - Configurar temperatura e tipo de teste

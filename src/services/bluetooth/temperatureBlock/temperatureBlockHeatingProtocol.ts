@@ -1,4 +1,4 @@
-import { base64ToBytes } from './temperatureBlockProtocol';
+import { base64ToBytes } from '../core/utils';
 
 export const TEMPO_AQUECIMENTO_BLOCO_UUID =
   'b3da2006-d898-43e4-933c-fb6e389ffd09'; // READ - Tempo até atingir temperatura

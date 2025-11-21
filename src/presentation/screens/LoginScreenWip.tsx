@@ -29,6 +29,7 @@ interface Props {
   onLoginGoogle: () => Promise<void> | void;
   onRegister: () => void;
   onAccessAdminPanel: () => void;
+  onNavigateToHome?: () => void;
 }
 
 export const LoginScreenWip: React.FC<Props> = ({
@@ -36,6 +37,7 @@ export const LoginScreenWip: React.FC<Props> = ({
   onLoginGoogle,
   onRegister,
   onAccessAdminPanel,
+  onNavigateToHome,
 }) => {
   const [secretClicks, setSecretClicks] = useState<number>(0);
   const [lastClickTime, setLastClickTime] = useState<number>(0);
@@ -95,6 +97,11 @@ export const LoginScreenWip: React.FC<Props> = ({
     onRegister();
   };
 
+  const handleNavigateToHome = () => {
+    logUserAction('navigate_to_home', { method: 'direct_navigation' });
+    onNavigateToHome?.();
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
@@ -143,6 +150,21 @@ export const LoginScreenWip: React.FC<Props> = ({
             </View>
             <Text style={styles.googleText}>Login com Google</Text>
           </TouchableOpacity>
+
+          {onNavigateToHome && (
+            <TouchableOpacity
+              style={styles.homeBtn}
+              activeOpacity={0.85}
+              onPress={handleNavigateToHome}
+              accessibilityRole="button"
+              accessibilityLabel="Ir para Home"
+            >
+              <View style={styles.btnLeftIcon}>
+                <MaterialCommunityIcons name="home" size={22} color={GOLD} />
+              </View>
+              <Text style={styles.homeText}>Ir para Home</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ==== RODAPÉ ==== */}
@@ -233,6 +255,18 @@ const styles = StyleSheet.create({
   },
   phoneText: { color: GOLD, fontSize: 16, fontWeight: '700' },
   googleText: { color: TEXT, fontSize: 16, fontWeight: '600' },
+  homeBtn: {
+    backgroundColor: GOLD_BG,
+    borderRadius: 28,
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    borderWidth: 2,
+    borderColor: GOLD,
+    borderStyle: 'dashed',
+  },
+  homeText: { color: GOLD, fontSize: 16, fontWeight: '700' },
 
   /* RODAPÉ */
   footer: { alignItems: 'center', marginBottom: 50 },

@@ -1,4 +1,4 @@
-import { decode as atob, encode as btoa } from 'base-64';
+import { base64ToBytes, bytesToBase64 } from '../core/utils';
 
 // UUIDs do hardware conforme documentação
 export const PRE_TEST_SERVICE_UUID =
@@ -11,11 +11,12 @@ export const ERRO_ANALISE_UUID = 'cac8858d-2b4a-4fdd-a89b-6cfd28b4743f'; // NOTI
 export const SUCESSO_ANALISE_UUID = '8a017ac9-e48c-4849-9923-7d1db7f399b1'; // NOTIFY - Análise concluída
 
 // Outras características (para referência futura)
-export const CONFIGURA_BLOCO_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8'; // WRITE - Configurar temperatura e tipo de teste
-export const STATUS_BATERIA_UUID = '906d7ba4-d34c-4f2c-8633-c08239c4a432'; // READ - Porcentagem da bateria
-export const TEMPERATURA_BLOCO_UUID = 'df60fccb-9b33-4492-a633-e68e7df3c58d'; // READ - Temperatura atual do bloco
-export const TEMPO_AQUECIMENTO_BLOCO_UUID = 'b3da2006-d898-43e4-933c-fb6e389ffd09'; // READ - Tempo de aquecimento
-export const STATUS_DISPOSITIVO_UUID = '4c6098a9-0f22-494c-9b10-bc136656bc18'; // READ - Tempo decorrido desde início
+// UUIDs movidas para seus respectivos módulos para evitar conflitos de exportação:
+// - CONFIGURA_BLOCO_UUID -> temperatureBlock/temperatureBlockConfigProtocol.ts
+// - STATUS_BATERIA_UUID -> batteryStats/batteryStatsProtocol.ts
+// - TEMPERATURA_BLOCO_UUID -> temperatureBlock/temperatureBlockProtocol.ts
+// - TEMPO_AQUECIMENTO_BLOCO_UUID -> temperatureBlock/temperatureBlockHeatingProtocol.ts
+// - STATUS_DISPOSITIVO_UUID -> equipmentStatus/equipmentStatusProtocol.ts
 export const QUANTIDADE_TESTE_MEMORIA_UUID = '563a426f-c423-4b89-8d2b-269c8a45b826'; // READ - Quantos testes em memória
 export const RECUPERA_TESTE_MEMORIA_UUID = 'f0730b28-328c-4b89-b058-95a8817137eb'; // READ - Retorna teste da memória
 
@@ -41,32 +42,8 @@ export interface PreTestFailureFlags {
   failedWellsMask: number;  // byte2 em hexa (poços com falha)
 }
 
-// --------- Helpers base64 <-> bytes ---------
-
-export function base64ToBytes(value: string | null | undefined): number[] {
-  if (!value) return [];
-  const binary = atob(value); // string binária
-  const len = binary.length;
-  const bytes = new Array<number>(len);
-
-  for (let i = 0; i < len; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return bytes;
-}
-
-export function bytesToBase64(bytes: ArrayLike<number>): string {
-  const len = bytes.length;
-  let binary = '';
-
-  for (let i = 0; i < len; i += 1) {
-    const v = bytes[i] as number; // non-null assertion
-    binary += String.fromCharCode(v);
-  }
-
-  return btoa(binary);
-}
+// Re-exportar utilitários para compatibilidade
+export { base64ToBytes, bytesToBase64 };
 
 // --------- Parsing do STATUS do pré-teste ---------
 

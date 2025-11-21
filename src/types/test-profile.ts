@@ -1,4 +1,5 @@
 export type ProfileStatus = 'draft' | 'active' | 'archived';
+export type HardwareTestType = 'colorimetric' | 'fluorimetric';
 
 export interface TestProfile {
   id: number;
@@ -8,8 +9,9 @@ export interface TestProfile {
   targetTemperature: number; // °C (0.1°C increments)
   totalTime: {
     minutes: number;
-    seconds: number;
-  }; // mm:ss format
+    // Removido seconds - hardware só usa minutos
+  }; // mm format
+  hardwareTestType: HardwareTestType; // Tipo de leitura do hardware
   status: ProfileStatus;
   createdAt: number; // timestamp
   updatedAt: number; // timestamp
@@ -25,7 +27,7 @@ export interface TestProfileSnapshot {
   targetTemperature: number;
   totalTime: {
     minutes: number;
-    seconds: number;
+    // Removido seconds - hardware só usa minutos
   };
   executedAt: number; // timestamp
   executedBy: string; // user identifier
@@ -74,7 +76,8 @@ export interface CreateTestProfileRequest {
   testType: 'cinomose' | 'ibv_geral' | 'ibv_especifico' | 'custom';
   targetTemperature: number;
   totalTimeMinutes: number;
-  totalTimeSeconds: number;
+  // Removido totalTimeSeconds
+  hardwareTestType: HardwareTestType; // Novo campo obrigatório
 }
 
 export interface UpdateTestProfileRequest {
@@ -84,8 +87,8 @@ export interface UpdateTestProfileRequest {
   testType?: 'cinomose' | 'ibv_geral' | 'ibv_especifico' | 'custom';
   targetTemperature?: number;
   totalTimeMinutes?: number;
-  totalTimeSeconds?: number;
-  status?: ProfileStatus;
+  // Removido totalTimeSeconds
+  hardwareTestType?: HardwareTestType; // Novo campo opcional
 }
 
 export interface TestProfileRepository {

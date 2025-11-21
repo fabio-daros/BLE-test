@@ -18,8 +18,10 @@ import {
   CreateTestProfileRequest,
   UpdateTestProfileRequest,
   ProfileStatus,
+  HardwareTestType,
 } from '@/types/test-profile';
 import { colors } from '@presentation/theme';
+import type { HardwareTestType as HardwareTestTypeType } from '@/types/test-profile';
 
 interface ProfileManagementScreenProps {
   onNavigateBack: () => void;
@@ -74,10 +76,12 @@ export const ProfileManagementScreen: React.FC<
       Alert.alert('Sucesso', 'Perfil criado com sucesso!');
     } catch (error) {
       console.error('Erro ao criar perfil:', error);
-      Alert.alert(
-        'Erro',
-        error instanceof Error ? error.message : 'Falha ao criar perfil'
-      );
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Falha ao criar perfil';
+      Alert.alert('Erro', errorMessage);
+      // Não fechar o modal em caso de erro para o usuário poder tentar novamente
+      // Não re-lançar o erro para evitar Promise não tratada
     }
   };
 
@@ -263,8 +267,7 @@ export const ProfileManagementScreen: React.FC<
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Tempo:</Text>
           <Text style={styles.detailValue}>
-            {profile.totalTime.minutes}:
-            {profile.totalTime.seconds.toString().padStart(2, '0')}
+            {profile.totalTime.minutes}min
           </Text>
         </View>
       </View>
@@ -386,7 +389,7 @@ export const ProfileManagementScreen: React.FC<
       <CreateProfileModal
         visible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateProfile}
+        onSubmit={handleCreateProfile} // handleCreateProfile é async, então sempre retorna Promise
       />
 
       {/* Modal de Editar Perfil */}
@@ -407,7 +410,7 @@ export const ProfileManagementScreen: React.FC<
 const CreateProfileModal: React.FC<{
   visible: boolean;
   onClose: () => void;
-  onSubmit: (profile: CreateTestProfileRequest) => void;
+  onSubmit: (profile: CreateTestProfileRequest) => Promise<void>; // Sempre Promise
 }> = ({ visible, onClose, onSubmit }) => {
   const [formData, setFormData] = useState<CreateTestProfileRequest>({
     name: '',
@@ -415,23 +418,40 @@ const CreateProfileModal: React.FC<{
     testType: 'custom',
     targetTemperature: 65.0,
     totalTimeMinutes: 15,
-    totalTimeSeconds: 0,
+    hardwareTestType: 'colorimetric', // Valor padrão
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name.trim()) {
       Alert.alert('Erro', 'Nome do perfil é obrigatório');
       return;
     }
-    onSubmit(formData);
-    setFormData({
-      name: '',
-      description: '',
-      testType: 'custom',
-      targetTemperature: 65.0,
-      totalTimeMinutes: 15,
-      totalTimeSeconds: 0,
-    });
+
+    setIsSubmitting(true);
+    try {
+      // Sempre aguardar onSubmit (é sempre Promise)
+      await onSubmit(formData);
+      
+      // Só limpar o formulário se o submit foi bem-sucedido
+      setFormData({
+        name: '',
+        description: '',
+        testType: 'custom',
+        targetTemperature: 65.0,
+        totalTimeMinutes: 15,
+        hardwareTestType: 'colorimetric', // Valor padrão
+      });
+      
+      // O handleCreateProfile já fecha o modal via setShowCreateModal(false)
+    } catch (error) {
+      // Erro já é tratado em handleCreateProfile
+      console.error('Erro ao submeter formulário:', error);
+      // Não limpar form em caso de erro
+      // Não re-lançar para evitar Promise não tratada
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -445,16 +465,18 @@ const CreateProfileModal: React.FC<{
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Criar Novo Perfil</Text>
 
+          <Text style={styles.fieldLabel}>Nome do perfil *</Text>
           <TextInput
             style={styles.input}
-            placeholder="Nome do perfil"
+            placeholder="Digite o nome do perfil"
             value={formData.name}
             onChangeText={text => setFormData({ ...formData, name: text })}
           />
 
+          <Text style={styles.fieldLabel}>Descrição (opcional)</Text>
           <TextInput
             style={styles.input}
-            placeholder="Descrição (opcional)"
+            placeholder="Digite a descrição"
             value={formData.description}
             onChangeText={text =>
               setFormData({ ...formData, description: text })
@@ -463,43 +485,75 @@ const CreateProfileModal: React.FC<{
           />
 
           <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.input, styles.inputThird]}
-              placeholder="Temperatura (°C)"
-              value={formData.targetTemperature.toString()}
-              onChangeText={text =>
-                setFormData({
-                  ...formData,
-                  targetTemperature: parseFloat(text) || 0,
-                })
-              }
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[styles.input, styles.inputThird]}
-              placeholder="Minutos"
-              value={formData.totalTimeMinutes.toString()}
-              onChangeText={text =>
-                setFormData({
-                  ...formData,
-                  totalTimeMinutes: parseInt(text) || 0,
-                })
-              }
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[styles.input, styles.inputThird]}
-              placeholder="Segundos"
-              value={formData.totalTimeSeconds.toString()}
-              onChangeText={text => {
-                const seconds = parseInt(text) || 0;
-                // Limitar segundos a 0-59
-                const clampedSeconds = Math.max(0, Math.min(59, seconds));
-                setFormData({ ...formData, totalTimeSeconds: clampedSeconds });
-              }}
-              keyboardType="numeric"
-              maxLength={2}
-            />
+            <View style={styles.inputHalf}>
+              <Text style={styles.fieldLabel}>Temperatura (°C)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="65.0"
+                value={formData.targetTemperature.toString()}
+                onChangeText={text =>
+                  setFormData({
+                    ...formData,
+                    targetTemperature: parseFloat(text) || 0,
+                  })
+                }
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.inputHalf}>
+              <Text style={styles.fieldLabel}>Tempo (minutos)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="15"
+                value={formData.totalTimeMinutes.toString()}
+                onChangeText={text =>
+                  setFormData({
+                    ...formData,
+                    totalTimeMinutes: parseInt(text) || 0,
+                  })
+                }
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* Seleção de tipo de hardware */}
+          <View style={styles.hardwareTypeRow}>
+            <Text style={styles.hardwareTypeLabel}>Tipo de Leitura:</Text>
+            <View style={styles.hardwareTypeButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.hardwareTypeButton,
+                  formData.hardwareTestType === 'colorimetric' && styles.hardwareTypeButtonActive,
+                ]}
+                onPress={() => setFormData({ ...formData, hardwareTestType: 'colorimetric' })}
+              >
+                <Text
+                  style={[
+                    styles.hardwareTypeButtonText,
+                    formData.hardwareTestType === 'colorimetric' && styles.hardwareTypeButtonTextActive,
+                  ]}
+                >
+                  Colorimétrico
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.hardwareTypeButton,
+                  formData.hardwareTestType === 'fluorimetric' && styles.hardwareTypeButtonActive,
+                ]}
+                onPress={() => setFormData({ ...formData, hardwareTestType: 'fluorimetric' })}
+              >
+                <Text
+                  style={[
+                    styles.hardwareTypeButtonText,
+                    formData.hardwareTestType === 'fluorimetric' && styles.hardwareTypeButtonTextActive,
+                  ]}
+                >
+                  Fluorimétrico
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.modalActions}>
@@ -509,8 +563,11 @@ const CreateProfileModal: React.FC<{
             <TouchableOpacity
               style={styles.submitButton}
               onPress={handleSubmit}
+              disabled={isSubmitting}
             >
-              <Text style={styles.submitButtonText}>Criar</Text>
+              <Text style={styles.submitButtonText}>
+                {isSubmitting ? 'Criando...' : 'Criar'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -533,7 +590,8 @@ const EditProfileModal: React.FC<{
     testType: 'custom',
     targetTemperature: 65.0,
     totalTimeMinutes: 15,
-    totalTimeSeconds: 0,
+    // Removido totalTimeSeconds
+    hardwareTestType: 'colorimetric', // Adicionar
   });
 
   useEffect(() => {
@@ -545,7 +603,8 @@ const EditProfileModal: React.FC<{
         testType: profile.testType,
         targetTemperature: profile.targetTemperature,
         totalTimeMinutes: profile.totalTime.minutes,
-        totalTimeSeconds: profile.totalTime.seconds,
+        // Removido totalTimeSeconds
+        hardwareTestType: profile.hardwareTestType || 'colorimetric', // Adicionar com fallback
       });
     }
   }, [profile]);
@@ -560,7 +619,8 @@ const EditProfileModal: React.FC<{
     const updateData: UpdateTestProfileRequest = {
       ...formData,
       totalTimeMinutes: formData.totalTimeMinutes ?? profile.totalTime.minutes,
-      totalTimeSeconds: formData.totalTimeSeconds ?? profile.totalTime.seconds,
+      // Removido totalTimeSeconds
+      hardwareTestType: formData.hardwareTestType ?? profile.hardwareTestType, // Adicionar com fallback
     };
     onSubmit(updateData);
   };
@@ -578,16 +638,18 @@ const EditProfileModal: React.FC<{
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Editar Perfil</Text>
 
+          <Text style={styles.fieldLabel}>Nome do perfil *</Text>
           <TextInput
             style={styles.input}
-            placeholder="Nome do perfil"
+            placeholder="Digite o nome do perfil"
             value={formData.name}
             onChangeText={text => setFormData({ ...formData, name: text })}
           />
 
+          <Text style={styles.fieldLabel}>Descrição (opcional)</Text>
           <TextInput
             style={styles.input}
-            placeholder="Descrição (opcional)"
+            placeholder="Digite a descrição"
             value={formData.description}
             onChangeText={text =>
               setFormData({ ...formData, description: text })
@@ -596,43 +658,75 @@ const EditProfileModal: React.FC<{
           />
 
           <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.input, styles.inputThird]}
-              placeholder="Temperatura (°C)"
-              value={formData.targetTemperature?.toString()}
-              onChangeText={text =>
-                setFormData({
-                  ...formData,
-                  targetTemperature: parseFloat(text) || 0,
-                })
-              }
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[styles.input, styles.inputThird]}
-              placeholder="Minutos"
-              value={formData.totalTimeMinutes?.toString()}
-              onChangeText={text =>
-                setFormData({
-                  ...formData,
-                  totalTimeMinutes: parseInt(text) || 0,
-                })
-              }
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[styles.input, styles.inputThird]}
-              placeholder="Segundos"
-              value={formData.totalTimeSeconds?.toString()}
-              onChangeText={text => {
-                const seconds = parseInt(text) || 0;
-                // Limitar segundos a 0-59
-                const clampedSeconds = Math.max(0, Math.min(59, seconds));
-                setFormData({ ...formData, totalTimeSeconds: clampedSeconds });
-              }}
-              keyboardType="numeric"
-              maxLength={2}
-            />
+            <View style={styles.inputHalf}>
+              <Text style={styles.fieldLabel}>Temperatura (°C)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="65.0"
+                value={formData.targetTemperature?.toString()}
+                onChangeText={text =>
+                  setFormData({
+                    ...formData,
+                    targetTemperature: parseFloat(text) || 0,
+                  })
+                }
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.inputHalf}>
+              <Text style={styles.fieldLabel}>Tempo (minutos)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="15"
+                value={formData.totalTimeMinutes?.toString()}
+                onChangeText={text =>
+                  setFormData({
+                    ...formData,
+                    totalTimeMinutes: parseInt(text) || 0,
+                  })
+                }
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* Seleção de tipo de hardware */}
+          <View style={styles.hardwareTypeRow}>
+            <Text style={styles.hardwareTypeLabel}>Tipo de Leitura:</Text>
+            <View style={styles.hardwareTypeButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.hardwareTypeButton,
+                  formData.hardwareTestType === 'colorimetric' && styles.hardwareTypeButtonActive,
+                ]}
+                onPress={() => setFormData({ ...formData, hardwareTestType: 'colorimetric' })}
+              >
+                <Text
+                  style={[
+                    styles.hardwareTypeButtonText,
+                    formData.hardwareTestType === 'colorimetric' && styles.hardwareTypeButtonTextActive,
+                  ]}
+                >
+                  Colorimétrico
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.hardwareTypeButton,
+                  formData.hardwareTestType === 'fluorimetric' && styles.hardwareTypeButtonActive,
+                ]}
+                onPress={() => setFormData({ ...formData, hardwareTestType: 'fluorimetric' })}
+              >
+                <Text
+                  style={[
+                    styles.hardwareTypeButtonText,
+                    formData.hardwareTestType === 'fluorimetric' && styles.hardwareTypeButtonTextActive,
+                  ]}
+                >
+                  Fluorimétrico
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.modalActions}>
@@ -867,7 +961,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   inputHalf: {
-    flex: 1,
+    width: '48%', // Ao invés de inputThird
   },
   inputThird: {
     flex: 1,
@@ -902,5 +996,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.white,
+  },
+  hardwareTypeRow: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  hardwareTypeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginBottom: 8,
+  },
+  hardwareTypeButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  hardwareTypeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderAlt,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+  },
+  hardwareTypeButtonActive: {
+    backgroundColor: colors.goldBackground,
+    borderColor: colors.gold,
+  },
+  hardwareTypeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  hardwareTypeButtonTextActive: {
+    color: colors.gold,
+    fontWeight: '700',
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 6,
+    marginTop: 12,
   },
 });
