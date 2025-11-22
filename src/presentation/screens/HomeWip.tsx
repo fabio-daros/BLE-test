@@ -8,6 +8,7 @@ import {
   PermissionsAndroid,
   Platform,
   Linking,
+  StatusBar, // Adicionar StatusBar
 } from 'react-native';
 import type { Permission } from 'react-native';
 import { BleManager, BleError } from 'react-native-ble-plx';
@@ -1123,6 +1124,7 @@ export const HomeWip: React.FC<Props> = ({
   // ===== RENDER =====
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.backgroundGrayAlt2} />
       <View style={styles.container}>
         {/* HEADER */}
         <HomeHeader
@@ -1195,10 +1197,14 @@ export const HomeWip: React.FC<Props> = ({
 
 /* ================== styles ================== */
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.backgroundGrayAlt2 },
+  safe: { 
+    flex: 1, 
+    backgroundColor: colors.backgroundGrayAlt2,
+  },
   container: {
     flex: 1,
     paddingHorizontal: 24,
+    paddingTop: 0, // Garantir que não há paddingTop
     justifyContent: 'space-between',
   },
 
