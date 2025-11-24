@@ -24,6 +24,7 @@ interface AdminPanelScreenProps {
   onAccessSimulatorControls: () => void;
   onAccessProfileManagement: () => void;
   onNavigateToHomologationTemp?: () => void;
+  initialUnlocked?: boolean; // 👈 Nova prop para começar desbloqueado
 }
 
 export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
@@ -32,9 +33,10 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
   onAccessSimulatorControls,
   onAccessProfileManagement,
   onNavigateToHomologationTemp,
+  initialUnlocked = false, // 👈 Valor padrão
 }) => {
   const [password, setPassword] = useState<string>('');
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(initialUnlocked); // 👈 Usar initialUnlocked
   const [attempts, setAttempts] = useState<number>(0);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [showMachineStatus, setShowMachineStatus] = useState<boolean>(false);
@@ -181,13 +183,20 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
         <View style={styles.container}>
           {/* ==== HEADER ==== */}
           <View style={styles.header}>
+            <View style={styles.headerSpacer} />
+            <Text style={styles.title}>Painel Administrativo</Text>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={onNavigateBack}
+              onPress={() => {
+                // 👈 Quando desbloqueado, voltar para tela de senha
+                setIsUnlocked(false);
+                setPassword('');
+                setAttempts(0);
+                setIsLocked(false);
+              }}
             >
-              <Text style={styles.backButtonText}>← Voltar</Text>
+              <Text style={styles.backButtonText}>Voltar</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Painel Administrativo</Text>
           </View>
 
           {/* ==== CONTEÚDO DESBLOQUEADO ==== */}
@@ -212,7 +221,7 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
                 }}
               >
                 <Text style={styles.adminButtonText}>
-                  📊 Acessar Logs do Sistema
+                  Logs do Sistema
                 </Text>
               </TouchableOpacity>
 
@@ -227,7 +236,7 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
                   }}
                 >
                   <Text style={styles.adminButtonText}>
-                    🧪 Homologação Temporária
+                    Homologação Temporária
                   </Text>
                 </TouchableOpacity>
               )}
@@ -241,7 +250,7 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
                   setShowMachineStatus(true);
                 }}
               >
-                <Text style={styles.adminButtonText}>🧰 Status da máquina</Text>
+                <Text style={styles.adminButtonText}>Status do Equipamento</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -254,7 +263,7 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
                 }}
               >
                 <Text style={styles.adminButtonText}>
-                  🎮 Controles do Simulador
+                  Controles do Simulador
                 </Text>
               </TouchableOpacity>
 
@@ -268,7 +277,7 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
                 }}
               >
                 <Text style={styles.adminButtonText}>
-                  ⚙️ Gerenciar Perfis de Teste
+                  Perfis de Teste
                 </Text>
               </TouchableOpacity>
             </View>
@@ -292,10 +301,11 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
       <View style={styles.container}>
         {/* ==== HEADER ==== */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onNavigateBack}>
-            <Text style={styles.backButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} /> {/* 👈 Adicionar spacer invisível */}
           <Text style={styles.title}>Painel Administrativo</Text>
+          <TouchableOpacity style={styles.backButton} onPress={onNavigateBack}>
+            <Text style={styles.backButtonText}>Sair</Text> {/* 👈 Mudar de "Voltar" para "Sair" */}
+          </TouchableOpacity>
         </View>
 
         {/* ==== DISPLAY DA SENHA ==== */}
@@ -303,14 +313,10 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
           <Text style={styles.passwordLabel}>Senha de Acesso:</Text>
           <View style={styles.passwordInput}>
             {password.split('').map((char, index) => (
-              <View key={index} style={styles.passwordDot}>
-                <Text style={styles.passwordDotText}>●</Text>
-              </View>
+              <View key={index} style={styles.passwordDot} />
             ))}
             {Array.from({ length: 4 - password.length }).map((_, index) => (
-              <View key={`empty-${index}`} style={styles.passwordDotEmpty}>
-                <Text style={styles.passwordDotEmptyText}>○</Text>
-              </View>
+              <View key={`empty-${index}`} style={styles.passwordDotEmpty} />
             ))}
           </View>
 
@@ -369,7 +375,7 @@ export const AdminPanelScreen: React.FC<AdminPanelScreenProps> = ({
         {/* ==== DICA ==== */}
         <View style={styles.hintSection}>
           <Text style={styles.hintText}>
-            💡 Dica: A senha é um número de 4 dígitos
+            💡 Dica: A senha é um número de 4 dígitos.
           </Text>
         </View>
       </View>
@@ -442,7 +448,7 @@ const SimulatorControlsModal: React.FC<{
           <ScrollView style={styles.scrollView}>
             {/* Status da Máquina */}
             <View style={styles.controlSection}>
-              <Text style={styles.sectionTitle}>Status da Máquina</Text>
+              <Text style={styles.sectionTitle}>Status do Equipamento</Text>
 
               <TouchableOpacity
                 style={styles.statusButton}
@@ -756,7 +762,7 @@ const MachineStatusModal: React.FC<{
     >
       <View style={styles.modalBackdrop}>
         <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>Status da máquina</Text>
+          <Text style={styles.modalTitle}>Status do Equipamento</Text>
           <Text style={styles.modalSubtitle}>
             Conexão: {connected ? 'Conectado' : 'Desconectado'}
           </Text>
@@ -818,14 +824,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundGrayAlt2,
     padding: 24,
-    paddingTop: Platform.OS === 'android' ? 24 + 60 : 24, // Padding muito maior para Android
+    paddingTop: Platform.OS === 'android' ? 24 + 60 : 24,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 32,
-    paddingTop: Platform.OS === 'android' ? 20 : 0, // Padding extra maior para Android
+    marginBottom: 24,
+    paddingTop: Platform.OS === 'android' ? 8 : 0,
+    position: 'relative',
   },
   backButton: {
     borderWidth: 1,
@@ -834,6 +841,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.white,
+    marginTop: Platform.OS === 'android' ? -80 : 0,
+    zIndex: 1,
   },
   backButtonText: {
     color: colors.gold,
@@ -844,8 +853,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
     textAlign: 'center',
+  },
+  headerSpacer: { 
+    width: 100,
   },
   passwordDisplay: {
     alignItems: 'center',
@@ -883,10 +897,6 @@ const styles = StyleSheet.create({
     borderColor: colors.textMuted,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  passwordDotEmptyText: {
-    color: colors.textMuted,
-    fontSize: 16,
   },
   attemptsText: {
     fontSize: 14,
@@ -944,7 +954,7 @@ const styles = StyleSheet.create({
     borderColor: colors.textMuted,
   },
   actionButtonDanger: {
-    backgroundColor: '#fef2f2', // Cor específica para erro, manter hardcoded
+    backgroundColor: '#fef2f2', 
     borderColor: colors.errorAlt,
   },
   actionButtonText: {
@@ -963,7 +973,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   accessButton: {
-    backgroundColor: colors.successAlt2,
+    backgroundColor: colors.gold,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 24,
@@ -995,14 +1005,12 @@ const styles = StyleSheet.create({
   successIcon: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.successAlt2,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
   successIconText: {
-    fontSize: 40,
+    fontSize: 50,
   },
   unlockedTitle: {
     fontSize: 24,

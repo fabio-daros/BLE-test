@@ -37,13 +37,10 @@ interface Props {
 
   onConfirm?: (selected: number[]) => void;
 
-  // Pop-up de temperatura
-  initialTempC?: number;
   tempLabel?: string;
   tempMessage?: string | null;
   startExpandedPill?: boolean;
 
-  // ⭐ Novo: controles fáceis de layout do card/grade
   wellsCardWidth?: number; // default 240 (mais estreito)
   wellsCardMinHeight?: number; // default 360 (mais alto)
   tubeSize?: TubeSize; // default { width: 26, height: 50 }
@@ -66,8 +63,7 @@ const SelectWells: React.FC<Props> = ({
   initiallySelected = [],
   onConfirm,
 
-  initialTempC = 31,
-  tempLabel = 'TEMPERATURA DO EQUIPAMENTO',
+  tempLabel = 'TEMP. DO EQUIPAMENTO',
   tempMessage = null,
   startExpandedPill = true,
 
@@ -90,9 +86,6 @@ const SelectWells: React.FC<Props> = ({
     );
   };
 
-  // ---- Pop-up de temperatura removido - agora usando componente TemperaturePill
-
-  // Hook para monitorar temperatura em tempo real
   const { temperature, isMonitoring } = useTemperatureBlockMonitoring();
 
   // ---- Cálculo conveniente do tamanho da célula
@@ -116,16 +109,12 @@ const SelectWells: React.FC<Props> = ({
 
       {/* Pop-up de temperatura com temperatura em tempo real */}
       <TemperaturePill
-        initialTempC={initialTempC} // Fallback se não houver temperatura do hardware
-        currentTempC={isMonitoring && temperature !== null ? temperature : null} // Passar null quando não está monitorando
+        currentTempC={isMonitoring && temperature !== null ? temperature : null}
         tempLabel={tempLabel}
         tempMessage={tempMessage}
         startExpanded={startExpandedPill}
-        initialX={14}
-        initialY={58}
-        onClose={() => {
-          // Callback opcional
-        }}
+        initialX={16}
+        initialY={52}
       />
 
       <ScrollView

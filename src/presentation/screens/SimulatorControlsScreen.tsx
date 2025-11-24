@@ -44,12 +44,13 @@ export const SimulatorControlsScreen: React.FC<
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        {/* Cabeçalho */}
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onNavigateBack}>
-            <Text style={styles.backButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} /> {/* 👈 Adicionar spacer invisível */}
           <Text style={styles.title}>Controles do Simulador</Text>
+          <TouchableOpacity style={styles.backButton} onPress={onNavigateBack}>
+            <Text style={styles.backButtonText}>Voltar</Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.scrollView}>
@@ -448,7 +449,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 32,
-    paddingTop: Platform.OS === 'android' ? 20 : 0,
+    paddingTop: Platform.OS === 'android' ? 8 : 0,
+    position: 'relative',
   },
   backButton: {
     borderWidth: 1,
@@ -457,6 +459,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.white,
+    zIndex: 1,
+    marginTop: Platform.OS === 'android' ? -80 : 0,
+  },
+  headerSpacer: { // 👈 Adicionar novo estilo
+    width: 100, // Largura aproximada do botão "Voltar"
   },
   backButtonText: {
     color: colors.goldAlt3,
@@ -467,8 +474,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    flex: 1,
-    textAlign: 'center',
+    position: 'absolute', // 👈 Usar position absolute para centralizar
+    left: 0,
+    right: 0,
+    textAlign: 'center', // 👈 Centralizar o texto
   },
   scrollView: {
     flex: 1,

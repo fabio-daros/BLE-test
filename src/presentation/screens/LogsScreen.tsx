@@ -371,13 +371,14 @@ export const LogsScreen: React.FC<LogsScreenProps> = ({ onNavigateBack }) => {
         {/* ==== HEADER ==== */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
+            <View style={styles.headerSpacer} />
+            <Text style={styles.title}>Logs do Sistema</Text>
             <TouchableOpacity
               style={styles.backButton}
               onPress={handleNavigateBack}
             >
-              <Text style={styles.backButtonText}>← Voltar</Text>
+              <Text style={styles.backButtonText}>Voltar</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Logs do Sistema</Text>
           </View>
 
           {/* ==== BOTÕES DE AÇÃO ==== */}
@@ -464,20 +465,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundGrayAlt2,
-    paddingTop: Platform.OS === 'android' ? 10 : 0, // Padding muito maior para Android
+    paddingTop: Platform.OS === 'android' ? 0 : 0, // 👈 Ajustar paddingTop
   },
   header: {
     padding: spacing.lg,
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderAlt,
-    paddingTop: Platform.OS === 'android' ? spacing.lg + 10 : spacing.lg, // Padding extra maior para Android
+    paddingTop: Platform.OS === 'android' ? spacing.lg : spacing.lg, // 👈 Ajustar
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.lg,
+    position: 'relative',
+    paddingTop: 0, // 👈 Garantir que não há padding extra
   },
   backButton: {
     borderWidth: 1,
@@ -486,17 +489,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     backgroundColor: colors.white,
+    zIndex: 1,
+    marginTop: Platform.OS === 'android' ? -1 : 0,
   },
-  backButtonText: {
+  backButtonText: { // 👈 Adicionar este estilo que está faltando
     color: colors.gold,
     fontSize: 14,
     fontWeight: '600',
+  },
+  headerSpacer: {
+    width: 100,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
     textAlign: 'center',
   },
   actionButtons: {

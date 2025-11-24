@@ -8,6 +8,7 @@ import {
   StyleSheet,
   StatusBar,
   ActivityIndicator,
+  // 👈 Remover Platform daqui
 } from 'react-native';
 // Substituído expo-av por react-native-video
 // @ts-ignore - react-native-video pode não ter tipos completos
@@ -40,7 +41,7 @@ const VideoTutorial: React.FC<Props> = ({
   onGoHome,
   onOpenHistory,
 }) => {
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef<any>(null); // 👈 Mudar de Video para any
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [paused, setPaused] = useState(true);
@@ -81,7 +82,9 @@ const VideoTutorial: React.FC<Props> = ({
     setCurrentTime(duration);
   };
 
-  const onError = () => {
+  const onError = (error: any) => {
+    console.error('[VideoTutorial] Erro ao carregar vídeo:', error);
+    console.error('[VideoTutorial] Detalhes do erro:', JSON.stringify(error, null, 2));
     setError(true);
     setLoading(false);
   };
@@ -121,6 +124,15 @@ const VideoTutorial: React.FC<Props> = ({
               onError={onError}
             />
 
+            {/* Overlay para pausar quando o vídeo está tocando */}
+            {!paused && !loading && (
+              <TouchableOpacity
+                style={styles.videoOverlay}
+                onPress={() => setPaused(true)}
+                activeOpacity={1}
+              />
+            )}
+
             {/* Estado carregando */}
             {loading && (
               <ActivityIndicator
@@ -130,61 +142,61 @@ const VideoTutorial: React.FC<Props> = ({
               />
             )}
 
-            {/* Ícone Play/Pause */}
-            <TouchableOpacity
-              style={styles.playOverlay}
-              onPress={togglePlayPause}
-              activeOpacity={0.7}
-            >
-              <AntDesign
-                name={
-                  (!paused
-                    ? 'pausecircleo'
-                    : didJustFinish
+            {/* Ícone Play/Pause - só aparece quando pausado ou quando termina */}
+            {(paused || didJustFinish) && (
+              <TouchableOpacity
+                style={styles.playOverlay}
+                onPress={togglePlayPause}
+                activeOpacity={0.7}
+              >
+                <AntDesign
+                  name={
+                    (didJustFinish
                       ? 'reload1'
                       : 'playcircleo') as any
-                }
-                size={48}
-                color={colors.shadowAlt5}
-              />
-            </TouchableOpacity>
-
-            {/* Barra de progresso */}
-            {duration > 0 && (
-              <View style={styles.progressContainer}>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        flex: currentTime / duration,
-                      },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.progressRest,
-                      {
-                        flex: 1 - currentTime / duration,
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.progressText}>
-                  {Math.floor(currentTime / 1000 / 60)}:
-                  {Math.floor((currentTime / 1000) % 60)
-                    .toString()
-                    .padStart(2, '0')}{' '}
-                  /{Math.floor(duration / 1000 / 60)}:
-                  {Math.floor((duration / 1000) % 60)
-                    .toString()
-                    .padStart(2, '0')}
-                </Text>
-              </View>
+                  }
+                  size={48}
+                  color={colors.shadowAlt5}
+                />
+              </TouchableOpacity>
             )}
           </>
         )}
       </View>
+
+      {/* Barra de progresso - fora da área do vídeo */}
+      {duration > 0 && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  flex: currentTime / duration,
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.progressRest,
+                {
+                  flex: 1 - currentTime / duration,
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.progressText}>
+            {Math.floor(currentTime / 1000 / 60)}:
+            {Math.floor((currentTime / 1000) % 60)
+              .toString()
+              .padStart(2, '0')}{' '}
+            /{Math.floor(duration / 1000 / 60)}:
+            {Math.floor((duration / 1000) % 60)
+              .toString()
+              .padStart(2, '0')}
+          </Text>
+        </View>
+      )}
 
       <BottomBar fixed />
     </SafeAreaView>
@@ -198,12 +210,12 @@ const styles = StyleSheet.create({
   },
   playerContainer: {
     margin: 40,
-    marginBottom: 60,
+    marginBottom: 20,
     flex: 1,
     backgroundColor: colors.backgroundGray,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.gold,
+    borderColor: colors.backgroundBeige,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -222,6 +234,14 @@ const styles = StyleSheet.create({
     padding: 6,
     elevation: 3,
   },
+  videoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 4,
+  },
   playOverlay: {
     position: 'absolute',
     alignSelf: 'center',
@@ -232,10 +252,9 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   progressContainer: {
-    position: 'absolute',
-    bottom: 10,
-    left: 15,
-    right: 15,
+    marginHorizontal: 40,
+    marginBottom: 20,
+    paddingHorizontal: 15,
   },
   progressTrack: {
     flexDirection: 'row',

@@ -9,6 +9,7 @@ export { default as TestHistory } from './TestHistory';
 export { default as HomologationTemp } from './HomologationTemp';
 export { default as SummaryCinomose } from './SummaryCinomose';
 export { default as TestInProgress } from './TestInProgress';
+export { default as TestInProgressWithHardwareTime } from './TestInProgressWithHardwareTime';
 export { default as ResultsScreen } from './ResultsScreen';
 export { default as PipettingInProgress } from './PipettingInProgress';
 export { SampleIdentificationScreen } from './SampleIdentificationScreen';

@@ -42,6 +42,7 @@ import {
   HomologationTemp,
   SummaryCinomose,
   TestInProgress,
+  TestInProgressWithHardwareTime,
   ResultsScreen,
   PipettingInProgress,
   SampleIdentificationScreen,
@@ -70,6 +71,8 @@ import type { AmostraResultado } from '@presentation/screens/ResultsScreen';
 import { testDataService } from '@/data/test-data-service';
 import { NavigationProvider } from '@/contexts/NavigationContext';
 import { BluetoothProvider } from '@/contexts/BluetoothContext';
+import { useStartAnalysis } from '@/services/bluetooth/startAnalysis';
+import { useBatteryMonitoring } from '@/services/bluetooth/batteryStats'; // �� Adicionar import
 
 export const App: React.FC = () => {
   const [currentState, setCurrentState] = useState<
@@ -370,17 +373,8 @@ export const App: React.FC = () => {
   // };
 
   const handleNavigateBackFromLogs = () => {
-    logger.info(
-      'Voltando da tela de logs',
-      {
-        from: 'logs',
-        to: 'homewip',
-        trigger: 'back_button',
-        user: currentUser,
-      },
-      'navigation'
-    );
-    setCurrentState('homewip');
+    setPreviousState('logs'); // 👈 Salvar estado anterior
+    setCurrentState('admin'); // 👈 Voltar para admin (tela de seleção)
   };
 
   const handleNavigateToPhoneLogin = () => {
@@ -702,31 +696,20 @@ export const App: React.FC = () => {
   };
 
   const handleNavigateBackFromAdmin = () => {
-    if (previousState) {
-      logger.info(
-        'Voltando do painel administrativo para ' + previousState,
-        {
-          from: 'admin',
-          to: previousState,
-          trigger: 'back_button',
-          user: currentUser,
-        },
-        'navigation'
-      );
-      setCurrentState(previousState as any);
-    } else {
-      logger.info(
-        'Voltando do painel administrativo para login',
-        {
-          from: 'admin',
-          to: 'login',
-          trigger: 'back_button',
-          user: currentUser,
-        },
-        'navigation'
-      );
-      setCurrentState('login');
-    }
+    // 👈 Sempre voltar para login quando clicar em "Sair" na tela de senha
+    // (quando desbloqueado, o botão "Voltar" reseta o estado interno, não chama esta função)
+    logger.info(
+      'Saindo do painel administrativo para login',
+      {
+        from: 'admin',
+        to: 'login',
+        trigger: 'back_button',
+        user: currentUser,
+      },
+      'navigation'
+    );
+    setCurrentState('login');
+    setPreviousState(null); // 👈 Limpar previousState ao sair do admin
   };
 
   const handleAccessLogsFromAdmin = () => {
@@ -1223,6 +1206,7 @@ export const App: React.FC = () => {
             onAccessLogs={handleAccessLogsFromAdmin}
             onAccessSimulatorControls={handleAccessSimulatorControls}
             onAccessProfileManagement={handleAccessProfileManagement}
+            initialUnlocked={previousState === 'profileManagement' || previousState === 'logs' || previousState === 'simulatorControls'} // 👈 Adicionar esta prop
             onNavigateToHomologationTemp={() => {
               logger.info(
                 'Navegando para HomologationTemp do painel administrativo',
@@ -1261,21 +1245,8 @@ export const App: React.FC = () => {
         return (
           <SimulatorControlsScreen
             onNavigateBack={() => {
-              if (previousState) {
-                logger.info(
-                  'Voltando da tela SimulatorControls para ' + previousState,
-                  { from: 'simulatorControls', to: previousState },
-                  'navigation'
-                );
-                setCurrentState(previousState as any);
-              } else {
-                logger.info(
-                  'Voltando da tela SimulatorControls para admin',
-                  { from: 'simulatorControls', to: 'admin' },
-                  'navigation'
-                );
-                setCurrentState('admin');
-              }
+              setPreviousState('simulatorControls'); // 👈 Salvar estado anterior
+              setCurrentState('admin');
             }}
           />
         );
@@ -1318,6 +1289,8 @@ export const App: React.FC = () => {
                   { from: 'preTestInstructions', to: 'summaryCinomose' },
                   'navigation'
                 );
+                // 👈 Restaurar previousState para 'sampleIdentification' ao voltar para summaryCinomose
+                setPreviousState('sampleIdentification');
                 setCurrentState('summaryCinomose');
               } else if (previousState) {
                 // Se houver um previousState válido (mas não os casos acima), volta para ele
@@ -1382,7 +1355,7 @@ export const App: React.FC = () => {
               navigateToState('pipettingInProgress');
             }}
             showTemperature={true}
-            temperatureLabel="TEMPERATURA DO EQUIPAMENTO"
+            temperatureLabel="TEMP. DO EQUIPAMENTO"
             temperatureValue="63ºC"
             onCloseTemperature={() => {
               logger.info(
@@ -1550,8 +1523,6 @@ export const App: React.FC = () => {
               // Navegar para SampleIdentificationScreen com o número de amostras
               navigateToState('sampleIdentification');
             }}
-            initialTempC={31}
-            tempLabel="TEMP. DO BLOCO"
             startExpandedPill={true}
           />
         );
@@ -1560,7 +1531,16 @@ export const App: React.FC = () => {
         return (
           <SummaryCinomose
             onBack={() => {
-              if (previousState) {
+              // 👈 Se previousState for 'summaryCinomose', significa que voltamos de preTestInstructions
+              // Nesse caso, voltar para 'sampleIdentification'
+              if (previousState === 'summaryCinomose') {
+                logger.info(
+                  'Voltando da tela SummaryCinomose para SampleIdentification',
+                  { from: 'summaryCinomose', to: 'sampleIdentification' },
+                  'navigation'
+                );
+                setCurrentState('sampleIdentification');
+              } else if (previousState) {
                 logger.info(
                   'Voltando da tela SummaryCinomose para ' + previousState,
                   { from: 'summaryCinomose', to: previousState },
@@ -1620,28 +1600,11 @@ export const App: React.FC = () => {
         const durationSec = calculateDuration();
 
         return (
-          <TestInProgress
+          <TestInProgressWithHardwareTime
             durationSec={durationSec}
             title={`Teste em\nAndamento`}
             statusLabel="Aguarde"
-            statusMessage={`Processando resultados\ndo teste...`}
-            onBack={() => {
-              if (previousState) {
-                logger.info(
-                  'Voltando da tela TestInProgress para ' + previousState,
-                  { from: 'testInProgress', to: previousState },
-                  'navigation'
-                );
-                setCurrentState(previousState as any);
-              } else {
-                logger.info(
-                  'Voltando da tela TestInProgress - sem estado anterior',
-                  { from: 'testInProgress', to: 'login' },
-                  'navigation'
-                );
-                setCurrentState('login');
-              }
-            }}
+            statusMessage={`Avisaremos quando teste\nfor finalizado.`}
             onGoHome={() => {
               logger.info(
                 'Navegando para home da tela TestInProgress',
@@ -1653,30 +1616,6 @@ export const App: React.FC = () => {
             onComplete={() => {
               logger.info(
                 'Teste finalizado',
-                { from: 'testInProgress', to: 'resultsScreen' },
-                'test'
-              );
-              // Gerar resultados aleatórios baseados nas amostras selecionadas
-              const samples: SampleItem[] =
-                selectedWells.length > 0
-                  ? selectedWells.map((well, index) => {
-                      if (index === 0) {
-                        return { id: well.id, type: 'controle-negativo' };
-                      } else if (index === 1) {
-                        return { id: well.id, type: 'controle-positivo' };
-                      } else {
-                        return { id: well.id, type: 'amostra' };
-                      }
-                    })
-                  : [];
-              const results = generateRandomResults(samples, selectedWells);
-              setCurrentTestResults(results);
-              navigateWithoutUpdatingPrevious('resultsScreen');
-            }}
-            showFinishButton={true}
-            onFinishNow={() => {
-              logger.info(
-                'Teste finalizado manualmente',
                 { from: 'testInProgress', to: 'resultsScreen' },
                 'test'
               );
@@ -1834,51 +1773,72 @@ export const App: React.FC = () => {
                 { id: 'ID-012', type: 'amostra' },
               ];
 
-        return (
-          <PipettingInProgress
-            samples={samples}
-            {...(selectedWells.length > 0 && {
-              wellNumbers: selectedWells.map(well => well.num),
-              wellsInfo: selectedWells,
-            })}
-            filledPipesCount={filledPipesCount} // Quantidade de pipes preenchidos (0-16)
-            renderHeader={
-              <AppHeader
-                {...(previousState && {
-                  onBack: () => {
-                    logger.info(
-                      'Voltando da tela PipettingInProgress para ' +
-                        previousState,
-                      { from: 'pipettingInProgress', to: previousState },
-                      'navigation'
-                    );
-                    setCurrentState(previousState as any);
-                  },
-                })}
-                {...{
-                  onOpenHistory: handleNavigateToTestHistory,
-                  onGoHome: () => {
-                    logger.info(
-                      'Navegando para home da tela PipettingInProgress',
-                      { from: 'pipettingInProgress' },
-                      'navigation'
-                    );
-                    setCurrentState('homewip');
-                  },
-                }}
-              />
-            }
-            renderFooter={<BottomBar fixed />}
-            onStartPress={() => {
-              logger.info(
-                'Iniciando teste da pipetagem',
-                { from: 'pipettingInProgress', to: 'testInProgress' },
-                'test'
-              );
-              navigateWithoutUpdatingPrevious('testInProgress');
-            }}
-          />
-        );
+        // Componente interno que usa o hook
+        const PipettingInProgressWithHook = () => {
+          const { startAnalysis, isStarting } = useStartAnalysis();
+
+          return (
+            <PipettingInProgress
+              samples={samples}
+              {...(selectedWells.length > 0 && {
+                wellNumbers: selectedWells.map(well => well.num),
+                wellsInfo: selectedWells,
+              })}
+              filledPipesCount={filledPipesCount}
+              renderHeader={
+                <AppHeader
+                  {...(previousState && {
+                    onBack: () => {
+                      logger.info(
+                        'Voltando da tela PipettingInProgress para ' +
+                          previousState,
+                        { from: 'pipettingInProgress', to: previousState },
+                        'navigation'
+                      );
+                      setCurrentState(previousState as any);
+                    },
+                  })}
+                  {...{
+                    onOpenHistory: handleNavigateToTestHistory,
+                    onGoHome: () => {
+                      logger.info(
+                        'Navegando para home da tela PipettingInProgress',
+                        { from: 'pipettingInProgress' },
+                        'navigation'
+                      );
+                      setCurrentState('homewip');
+                    },
+                  }}
+                />
+              }
+              renderFooter={<BottomBar fixed />}
+              onStartPress={async () => {
+                logger.info(
+                  'Iniciando teste da pipetagem',
+                  { from: 'pipettingInProgress', to: 'testInProgress' },
+                  'test'
+                );
+                
+                // 👈 Enviar comando para iniciar análise
+                const success = await startAnalysis();
+                
+                if (success) {
+                  // Navegar para testInProgress após enviar comando com sucesso
+                  navigateWithoutUpdatingPrevious('testInProgress');
+                } else {
+                  // TODO: Mostrar erro ao usuário
+                  logger.error(
+                    'Falha ao iniciar análise',
+                    { from: 'pipettingInProgress' },
+                    'bluetooth'
+                  );
+                }
+              }}
+            />
+          );
+        };
+
+        return <PipettingInProgressWithHook />;
       }
 
       case 'sampleIdentification':
@@ -1935,7 +1895,10 @@ export const App: React.FC = () => {
       case 'profileManagement':
         return (
           <ProfileManagementScreen
-            onNavigateBack={() => setCurrentState('admin')}
+            onNavigateBack={() => {
+              setPreviousState('profileManagement'); // 👈 Salvar estado anterior
+              setCurrentState('admin');
+            }}
           />
         );
 
@@ -1964,6 +1927,9 @@ export const App: React.FC = () => {
 
   // Componente interno que usa hooks do Clerk
   const AppContent: React.FC = () => {
+    // Monitorar bateria em todas as telas (logs apenas no console/logcat)
+    useBatteryMonitoring();
+
     return (
       <NavigationProvider
         currentState={currentState as any}

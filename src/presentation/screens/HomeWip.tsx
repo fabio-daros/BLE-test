@@ -63,6 +63,8 @@ export const HomeWip: React.FC<Props> = ({
   // ===== ESTADOS LOCAIS =====
   const [isBluetoothPopupVisible, setBluetoothPopupVisible] = useState(false);
   const hasInitialPopupShownRef = useRef(false);
+  const lastPopupCloseTimeRef = useRef<number>(0); // 👈 Adicionar ref para rastrear quando foi fechado
+  const popupCooldownMs = 3000; // 👈 Delay de 3 segundos antes de reabrir
   const [bluetoothPopupMode, setBluetoothPopupMode] = useState<
     'request' | 'error' | 'devices'
   >('request');
@@ -112,26 +114,48 @@ export const HomeWip: React.FC<Props> = ({
     // Se já tiver dispositivo conectado, não mostrar popup inicial
     if (isDeviceConnected) {
       hasInitialPopupShownRef.current = true;
-    } else {
-      hasInitialPopupShownRef.current = false;
+      return; // 👈 Retornar cedo se já estiver conectado
     }
 
-    const showPopupTimer = setTimeout(() => {
+    const showPopupTimer = setTimeout(async () => {
       if (
         isMountedRef.current &&
         !hasInitialPopupShownRef.current &&
         !isBluetoothPopupVisible &&
         !isDeviceConnected
       ) {
-        setBluetoothPopupMode(currentMode => {
-          if (currentMode === 'devices' || currentMode === 'error') {
-            hasInitialPopupShownRef.current = true;
-            return currentMode;
-          }
+        // 👈 Verificar se passou o cooldown desde o último fechamento
+        const timeSinceLastClose = Date.now() - lastPopupCloseTimeRef.current;
+        if (timeSinceLastClose < popupCooldownMs) {
+          console.log('[BLE] Popup fechado recentemente, aguardando cooldown...');
+          return;
+        }
+
+        // 👈 Verificar se as permissões já foram concedidas
+        const hasPermissions = await checkBluetoothPermissions();
+        
+        if (hasPermissions) {
+          // Se já tem permissões, mostrar popup no modo 'devices' para seleção do dispositivo
+          setBluetoothPopupMode('devices');
           hasInitialPopupShownRef.current = true;
-          logUserAction('bluetooth_permission_popup_shown_on_init');
-          return 'request';
-        });
+          console.log('[BLE] Permissões já concedidas, mostrando popup de seleção de dispositivos');
+          setBluetoothErrorMessage(null);
+          setBluetoothInfoMessage(null);
+          setBluetoothPopupVisible(true);
+          
+          // 👈 Iniciar scan automaticamente quando abrir o popup em modo 'devices'
+          setTimeout(() => {
+            startBluetoothScan({ autoOpenSettingsOnPowerOff: false }).catch(error => {
+              console.error('[BLE HomeWip] Erro ao iniciar scan automático:', error);
+            });
+          }, 300);
+          return;
+        }
+
+        // Se não tem permissões, mostrar popup de solicitação
+        setBluetoothPopupMode('request');
+        hasInitialPopupShownRef.current = true;
+        logUserAction('bluetooth_permission_popup_shown_on_init');
         setBluetoothErrorMessage(null);
         setBluetoothInfoMessage(null);
         setBluetoothPopupVisible(true);
@@ -141,9 +165,6 @@ export const HomeWip: React.FC<Props> = ({
     return () => {
       clearTimeout(showPopupTimer);
 
-      // NÃO parar scan ou cancelar timeout aqui se o scan estiver ativo
-      // O cleanup do scan será feito quando necessário (timeout ou manualmente)
-      // Parar scan apenas no unmount real do componente
       try {
         const manager = contextBleManager || bleManagerRef.current;
         if (manager && isScanningRef.current) {
@@ -154,14 +175,91 @@ export const HomeWip: React.FC<Props> = ({
         // ignora
       }
 
-      // Limpar timeout apenas se o componente estiver sendo desmontado completamente
-      // Não limpar se apenas o popup mudou de estado
-      // if (scanTimeoutRef.current) {
-      //   clearTimeout(scanTimeoutRef.current);
-      //   scanTimeoutRef.current = null;
-      // }
     };
-  }, [isBluetoothPopupVisible, logUserAction, isDeviceConnected, contextBleManager]);
+  }, [isBluetoothPopupVisible, isDeviceConnected]); // checkBluetoothPermissions é um useCallback estável, não precisa estar nas dependências
+
+  //  Adicionar novo useEffect para monitorar quando o popup fecha e reabrir após cooldown
+  useEffect(() => {
+    // Se o popup foi fechado e não há dispositivo conectado, agendar reabertura
+    if (!isBluetoothPopupVisible && !isDeviceConnected) {
+      const timeSinceLastClose = Date.now() - lastPopupCloseTimeRef.current;
+      const remainingCooldown = Math.max(0, popupCooldownMs - timeSinceLastClose);
+      
+      // 👈 Só agendar reabertura se o cooldown já passou ou se passou tempo suficiente
+      if (remainingCooldown > 0) {
+        const reopenTimer = setTimeout(async () => {
+          if (
+            isMountedRef.current &&
+            !isBluetoothPopupVisible &&
+            !isDeviceConnected
+          ) {
+            const hasPermissions = await checkBluetoothPermissions();
+            
+            if (hasPermissions) {
+              setBluetoothPopupMode('devices');
+              console.log('[BLE] Reabrindo popup após cooldown (modo devices)');
+              setBluetoothErrorMessage(null);
+              setBluetoothInfoMessage(null);
+              setBluetoothPopupVisible(true);
+              
+              // 👈 Iniciar scan automaticamente quando reabrir o popup em modo 'devices'
+              setTimeout(() => {
+                startBluetoothScan({ autoOpenSettingsOnPowerOff: false }).catch(error => {
+                  console.error('[BLE HomeWip] Erro ao iniciar scan automático:', error);
+                });
+              }, 300);
+            } else {
+              setBluetoothPopupMode('request');
+              console.log('[BLE] Reabrindo popup após cooldown (modo request)');
+              setBluetoothErrorMessage(null);
+              setBluetoothInfoMessage(null);
+              setBluetoothPopupVisible(true);
+            }
+          }
+        }, remainingCooldown);
+
+        return () => {
+          clearTimeout(reopenTimer);
+        };
+      } else {
+        // 👈 Se o cooldown já passou, reabrir imediatamente
+        const reopenImmediately = async () => {
+          if (
+            isMountedRef.current &&
+            !isBluetoothPopupVisible &&
+            !isDeviceConnected
+          ) {
+            const hasPermissions = await checkBluetoothPermissions();
+            
+            if (hasPermissions) {
+              setBluetoothPopupMode('devices');
+              console.log('[BLE] Reabrindo popup imediatamente (modo devices)');
+              setBluetoothErrorMessage(null);
+              setBluetoothInfoMessage(null);
+              setBluetoothPopupVisible(true);
+              
+              // 👈 Iniciar scan automaticamente quando reabrir o popup em modo 'devices'
+              setTimeout(() => {
+                startBluetoothScan({ autoOpenSettingsOnPowerOff: false }).catch(error => {
+                  console.error('[BLE HomeWip] Erro ao iniciar scan automático:', error);
+                });
+              }, 300);
+            } else {
+              setBluetoothPopupMode('request');
+              console.log('[BLE] Reabrindo popup imediatamente (modo request)');
+              setBluetoothErrorMessage(null);
+              setBluetoothInfoMessage(null);
+              setBluetoothPopupVisible(true);
+            }
+          }
+        };
+        
+        reopenImmediately();
+        return undefined; // 👈 Retornar undefined quando não há cleanup necessário
+      }
+    }
+    return undefined; // 👈 Retornar undefined quando a condição não é satisfeita
+  }, [isBluetoothPopupVisible, isDeviceConnected]);
 
   // Cleanup apenas no unmount real
   useEffect(() => {
@@ -874,13 +972,22 @@ export const HomeWip: React.FC<Props> = ({
     if (isRequestingBluetooth) {
       return;
     }
+    
+    // 👈 Se estiver em modo 'error' e houver dispositivos disponíveis, tentar reconectar
+    if (bluetoothPopupMode === 'error' && bluetoothDevices.length > 0) {
+      // Voltar para modo 'devices' e reiniciar o scan
+      setBluetoothPopupMode('devices');
+      await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
+      return;
+    }
+    
     const granted = await checkBluetoothPermissions();
     if (granted) {
       await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
     } else {
       setBluetoothPopupMode('request');
     }
-  }, [checkBluetoothPermissions, isRequestingBluetooth, startBluetoothScan]);
+  }, [checkBluetoothPermissions, isRequestingBluetooth, startBluetoothScan, bluetoothPopupMode, bluetoothDevices.length]);
 
   const handleCloseBluetoothPopup = useCallback(() => {
     if (isRequestingBluetooth || connectingDeviceId) {
@@ -892,11 +999,17 @@ export const HomeWip: React.FC<Props> = ({
         e
       )
     );
+    lastPopupCloseTimeRef.current = Date.now(); // 👈 Registrar tempo do fechamento
     setBluetoothPopupVisible(false);
     setBluetoothPopupMode('request');
     setBluetoothInfoMessage(null);
     setBluetoothErrorMessage(null);
-  }, [cleanupScan, connectingDeviceId, isRequestingBluetooth]);
+    
+    // 👈 Se não há dispositivo conectado, resetar para permitir reabertura do popup
+    if (!isDeviceConnected) {
+      hasInitialPopupShownRef.current = false;
+    }
+  }, [cleanupScan, connectingDeviceId, isRequestingBluetooth, isDeviceConnected]);
 
   const handleRefreshDeviceList = useCallback(
     async () => {
@@ -1099,9 +1212,10 @@ export const HomeWip: React.FC<Props> = ({
         setBluetoothErrorMessage(
           'Não foi possível conectar ao equipamento. Verifique se ele está ligado e tente novamente.'
         );
-        setBluetoothPopupMode('devices');
+        setBluetoothPopupMode('error'); // 👈 Mudar de 'devices' para 'error'
         setBluetoothPopupVisible(true);
-        await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
+        // 👈 Remover o startBluetoothScan automático, deixar o usuário clicar em "Tentar Novamente"
+        // await startBluetoothScan({ autoOpenSettingsOnPowerOff: true });
       } finally {
         if (isMountedRef.current) {
           setConnectingDeviceId(null);
@@ -1157,10 +1271,20 @@ export const HomeWip: React.FC<Props> = ({
           </Text>
         </View>
 
-        {/* BOTÃO PRINCIPAL */}
-        <TouchableOpacity style={styles.primaryBtn} onPress={handleStartTest}>
-          <Text style={styles.primaryBtnText}>Iniciar</Text>
-        </TouchableOpacity>
+        {/* BOTÕES */}
+        <View style={styles.buttonsContainer}>
+          {/* BOTÃO PRINCIPAL */}
+          <TouchableOpacity style={styles.primaryBtn} onPress={handleStartTest}>
+            <Text style={styles.primaryBtnText}>Iniciar</Text>
+          </TouchableOpacity>
+
+          {/* BOTÃO TUTORIAL */}
+          {onTutorial && (
+            <TouchableOpacity style={styles.tutorialBtn} onPress={onTutorial}>
+              <Text style={styles.tutorialBtnText}>Tutorial</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* BARRA INFERIOR */}
         <BottomBar fixed={true} />
@@ -1235,19 +1359,36 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  /* BOTÃO */
-  primaryBtn: {
+  /* BOTÕES */
+  buttonsContainer: {
     marginTop: 24,
     marginBottom: 70,
     marginHorizontal: 32,
+  },
+  primaryBtn: {
     backgroundColor: colors.gold,
-    borderRadius: 28,
+    borderRadius: 8, // 👈 Reduzir de 28 para 8 (mais quadrado)
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 12, // 👈 Espaçamento entre os botões
   },
   primaryBtnText: {
     color: colors.white,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  tutorialBtn: {
+    backgroundColor: colors.backgroundGrayAlt2, // 👈 Cor de fundo off-white
+    borderRadius: 8, // 👈 Reduzir de 28 para 8 (mais quadrado)
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.gold, // 👈 Borda dourada
+  },
+  tutorialBtnText: {
+    color: colors.gold,
     fontWeight: '700',
     fontSize: 16,
   },

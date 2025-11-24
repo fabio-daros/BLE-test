@@ -17,13 +17,31 @@ export interface TemperatureBlockConfigPayload {
   hex: string;
 }
 
+/**
+ * Constrói o payload de configuração do bloco de temperatura conforme protocolo:
+ * 
+ * 2 Bytes:
+ * - Byte 1:
+ *   - Bit 0-7: temperatura (bits 0-6 em índice 0-based, max 127°C)
+ *   - Bit 8: tipo de teste (bit 7 em índice 0-based: 0=colorimétrica, 1=fluorimétrica)
+ * - Byte 2: tempo de reação em minutos (max 255 minutos)
+ * 
+ * Exemplo: 0xA50F
+ * - Byte 1: 0xA5 = 10100101
+ *   - Bit 8 (bit 7): 1 = Fluorimétrica
+ *   - Bits 1-7 (bits 0-6): 0100101 = 37 graus
+ * - Byte 2: 0x0F = 15 minutos
+ */
 export function buildTemperatureBlockConfigPayload(
   input: TemperatureBlockConfigInput,
 ): TemperatureBlockConfigPayload {
   const clampedTemperature = Math.max(0, Math.min(127, Math.round(input.temperatureCelsius)));
   const clampedReaction = Math.max(0, Math.min(255, Math.round(input.reactionTimeMinutes)));
+  // Bit 8 (bit 7 em 0-based): 0=colorimétrica, 1=fluorimétrica
   const typeBit = input.testType === 'fluorimetric' ? 1 : 0;
+  // Byte 1: bit 7 = tipo, bits 0-6 = temperatura
   const byte1 = (typeBit << 7) | (clampedTemperature & 0b01111111);
+  // Byte 2: tempo de reação em minutos
   const byte2 = clampedReaction & 0xff;
   const bytes: [number, number] = [byte1, byte2];
   const base64 = bytesToBase64(bytes);
