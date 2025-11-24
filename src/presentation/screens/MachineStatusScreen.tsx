@@ -27,10 +27,11 @@ export const MachineStatusScreen: React.FC<Props> = ({ onBack }) => {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
+        <View style={styles.headerSpacer} /> {/* 👈 Adicionar spacer invisível */}
+        <Text style={styles.title}>Status do Equipamento</Text>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Voltar</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Status da máquina</Text>
       </View>
 
       <View style={styles.container}>
@@ -88,8 +89,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    marginBottom: 32,
+    paddingTop: Platform.OS === 'android' ? 8 : 0,
+    position: 'relative',
   },
   backButton: {
     borderWidth: 1,
@@ -98,6 +100,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.white,
+    marginTop: Platform.OS === 'android' ? -80 : 0,
+    zIndex: 1,
+  },
+  headerSpacer: {
+    width: 100,
   },
   backButtonText: {
     color: colors.gold,
@@ -108,9 +115,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
     textAlign: 'center',
-    marginRight: 48,
+    marginRight: 0,
   },
   container: {
     padding: 16,

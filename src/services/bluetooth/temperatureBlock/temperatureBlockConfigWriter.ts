@@ -6,6 +6,10 @@ import {
   type TemperatureBlockConfigInput,
   type TemperatureBlockTestType,
 } from './temperatureBlockConfigProtocol';
+import {
+  validateTemperatureBlockConfig,
+  formatConfigValidation,
+} from './temperatureBlockConfigValidator';
 import { writeCharacteristic } from '../core';
 
 export type { TemperatureBlockTestType };
@@ -27,6 +31,19 @@ export async function writeTemperatureBlockConfig(
   onMessage: (msg: string) => void,
   input: TemperatureBlockConfigInput,
 ): Promise<TemperatureBlockConfigResult | null> {
+  // Validação detalhada antes de enviar
+  const validation = validateTemperatureBlockConfig(input);
+  const validationReport = formatConfigValidation(validation);
+  
+  // Log detalhado da validação
+  console.log(validationReport);
+  onMessage(validationReport);
+
+  if (!validation.valid) {
+    onMessage('❌ Configuração inválida! Não será enviada.');
+    return null;
+  }
+
   const payload = buildTemperatureBlockConfigPayload(input);
   const typeBit = payload.bytes[0] >> 7;
   const temperatureBits = toBinary(payload.bytes[0] & 0b01111111, 7);

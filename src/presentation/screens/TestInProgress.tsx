@@ -13,8 +13,12 @@ import { colors } from '@presentation/theme';
 
 // ====== Tipos ======
 export type TestInProgressProps = {
-  /** Duração total do teste em segundos (controla o countdown) */
+  /** Duração total esperada do teste em segundos (para calcular progresso) */
   durationSec: number;
+  /** Tempo decorrido em segundos (vindo do hardware) - se não fornecido, usa countdown local */
+  elapsedSec?: number;
+  /** Temperatura atual do bloco (em graus Celsius) - opcional */
+  temperature?: number | null;
   /** Título grande da tela */
   title?: string;
   /** Rótulo destacado abaixo do anel */
@@ -24,35 +28,44 @@ export type TestInProgressProps = {
   /** Callbacks de navegação */
   onBack?: () => void;
   onGoHome?: () => void;
-  /** Chamado automaticamente quando o contador chega a 0 */
+  /** Chamado automaticamente quando o contador chega a 0 ou quando elapsedSec >= durationSec */
   onComplete?: () => void;
-  /** Botão para finalizar imediatamente (para testes) */
-  showFinishButton?: boolean; // default true
-  onFinishNow?: () => void;
 };
 
-// ====== Componente de Anel com Contador Regressivo ======
+// ====== Componente de Anel com Contador Progressivo/Regressivo ======
 const CircularCountdown = ({
   size = 220,
   stroke = 18,
   durationSec,
+  elapsedSec,
   onTick,
   onComplete,
 }: {
   size?: number;
   stroke?: number;
   durationSec: number;
-  onTick?: (_remaining: number) => void;
+  elapsedSec?: number; // Se fornecido, usa tempo decorrido do hardware (progressivo)
+  onTick?: (_elapsed: number) => void;
   onComplete?: () => void;
 }) => {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  // Progresso de 0 → 1
-  const [remaining, setRemaining] = useState(durationSec);
-  const progress = 1 - remaining / durationSec; // 0→1
+  // Se elapsedSec for fornecido, usa tempo decorrido (progressivo)
+  // Caso contrário, usa countdown local (regressivo)
+  const useElapsedTime = elapsedSec !== undefined;
+  
+  const [localRemaining, setLocalRemaining] = useState(durationSec);
+  
+  // Tempo atual: se usar elapsedSec do hardware, usa ele; senão, calcula do countdown local
+  const currentElapsed = useElapsedTime 
+    ? (elapsedSec ?? 0)
+    : durationSec - localRemaining;
+  
+  const progress = Math.min(1, currentElapsed / durationSec); // 0→1 (progresso)
+  
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevRemainingRef = useRef(durationSec);
+  const prevElapsedRef = useRef(currentElapsed);
   const onCompleteRef = useRef(onComplete);
   const onTickRef = useRef(onTick);
 
@@ -62,10 +75,21 @@ const CircularCountdown = ({
     onTickRef.current = onTick;
   }, [onComplete, onTick]);
 
-  // Atualiza a cada segundo
+  // Se usar elapsedSec do hardware, não precisa de intervalo local
+  // Caso contrário, mantém countdown local
   useEffect(() => {
-    setRemaining(durationSec);
-    prevRemainingRef.current = durationSec;
+    if (useElapsedTime) {
+      // Usando tempo do hardware - limpar intervalo se existir
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    // Countdown local (fallback)
+    setLocalRemaining(durationSec);
+    prevElapsedRef.current = 0;
 
     // Limpar intervalo anterior se existir
     if (intervalRef.current) {
@@ -73,7 +97,7 @@ const CircularCountdown = ({
     }
 
     intervalRef.current = setInterval(() => {
-      setRemaining(prev => {
+      setLocalRemaining(prev => {
         const next = Math.max(0, prev - 1);
 
         // Se chegou a 0, limpar o intervalo no próximo tick
@@ -92,37 +116,38 @@ const CircularCountdown = ({
         intervalRef.current = null;
       }
     };
-  }, [durationSec]);
+  }, [durationSec, useElapsedTime]);
 
-  // Dispara callbacks quando remaining muda (fora do setState)
+  // Dispara callbacks quando elapsed muda
   useEffect(() => {
     // Não disparar callbacks se o valor não mudou realmente
-    if (prevRemainingRef.current === remaining) {
+    if (prevElapsedRef.current === currentElapsed) {
       return;
     }
 
     // Atualizar ref antes de chamar callbacks
-    const currentRemaining = remaining;
+    const currentElapsedValue = currentElapsed;
 
     // Usar setTimeout para garantir que callbacks sejam chamados após renderização
-    // Isso evita o warning de atualizar estado durante renderização
     setTimeout(() => {
-      onTickRef.current?.(currentRemaining);
-      if (currentRemaining === 0) {
+      onTickRef.current?.(currentElapsedValue);
+      if (currentElapsedValue >= durationSec) {
         onCompleteRef.current?.();
       }
     }, 0);
 
-    prevRemainingRef.current = remaining;
-  }, [remaining]);
+    prevElapsedRef.current = currentElapsed;
+  }, [currentElapsed, durationSec]);
 
   const dashOffset = useMemo(
     () => circumference * (1 - progress),
     [progress, circumference]
   );
 
-  const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
-  const ss = String(remaining % 60).padStart(2, '0');
+  // Formatar tempo: mostrar tempo decorrido (progressivo)
+  const totalSeconds = currentElapsed;
+  const mm = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const ss = String(totalSeconds % 60).padStart(2, '0');
 
   return (
     <View
@@ -181,19 +206,19 @@ const CircularCountdown = ({
 // ====== Tela ======
 const TestInProgress: React.FC<TestInProgressProps> = ({
   durationSec,
+  elapsedSec,
+  temperature,
   title = `Teste em\nAndamento`,
   statusLabel = 'Aguarde',
-  statusMessage = 'Avisaremos quando o\nteste for finalizado.',
+  statusMessage = 'Avisaremos quando teste\nfor finalizado.',
   onBack,
   onGoHome,
   onComplete,
-  showFinishButton = true,
-  onFinishNow,
 }) => {
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header padrão do projeto */}
-      <AppHeader {...(onBack && { onBack })} {...(onGoHome && { onGoHome })} />
+      <AppHeader {...(onGoHome && { onGoHome })} />
 
       {/* Título */}
       <View style={styles.titleWrap}>
@@ -208,6 +233,7 @@ const TestInProgress: React.FC<TestInProgressProps> = ({
       <View style={styles.centerWrap}>
         <CircularCountdown
           durationSec={durationSec}
+          elapsedSec={elapsedSec}
           {...(onComplete && { onComplete })}
         />
       </View>
@@ -220,22 +246,13 @@ const TestInProgress: React.FC<TestInProgressProps> = ({
             {line}
           </Text>
         ))}
+        {/* Temperatura */}
+        {temperature !== null && temperature !== undefined && (
+          <Text style={styles.temperatureText}>
+            🌡️ {temperature >= 0 ? '+' : ''}{temperature.toFixed(1)}°C
+          </Text>
+        )}
       </View>
-
-      {/* Botão Finalizar (visibilidade controlável) */}
-      {showFinishButton && (
-        <View style={styles.finishWrap}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Finalizar teste agora"
-            onPress={onFinishNow}
-            style={styles.finishBtn}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.finishText}>Finalizar</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <BottomBar fixed />
     </SafeAreaView>
@@ -280,15 +297,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
   },
-  finishWrap: { paddingHorizontal: 20, marginTop: 28 },
-  finishBtn: {
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
+  temperatureText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.gold,
+    marginTop: 12,
+    textAlign: 'center',
   },
-  finishText: { color: colors.white, fontSize: 16, fontWeight: '800' },
 });
 
 export default TestInProgress;

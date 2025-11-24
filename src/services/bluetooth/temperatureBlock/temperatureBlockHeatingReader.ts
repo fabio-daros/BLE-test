@@ -23,34 +23,6 @@ export async function readTemperatureBlockHeatingTime(
     return null;
   }
 
-  // Log detalhado para o desenvolvedor do hardware - conversão big-endian
-  const bytes = base64ToBytes(value);
-  const bytesHex = bytes.map(b => `0x${b.toString(16).padStart(2, '0')}`).join(' ');
-  const bytesArray = `[${bytes.map(b => b.toString()).join(', ')}]`;
-
-  console.log('[DEBUG Hardware - Tempo Aquecimento] Base64 recebido:', value);
-  console.log('[DEBUG Hardware - Tempo Aquecimento] Bytes decodificados:', bytesArray);
-  console.log('[DEBUG Hardware - Tempo Aquecimento] Bytes em hex:', bytesHex);
-  console.log('[DEBUG Hardware - Tempo Aquecimento] Tamanho do buffer:', bytes.length, 'bytes');
-
-  // Só tenta ler como float32 se tiver pelo menos 4 bytes
-  if (bytes.length >= 4) {
-    const buffer = new ArrayBuffer(bytes.length);
-    const view = new DataView(buffer);
-    bytes.forEach((byte, index) => {
-      view.setUint8(index, byte);
-    });
-
-    const floatBigEndian = view.getFloat32(0, false);
-    const floatLittleEndian = view.getFloat32(0, true);
-
-    console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 BIG-ENDIAN:', floatBigEndian);
-    console.log('[DEBUG Hardware - Tempo Aquecimento] Float32 LITTLE-ENDIAN (comparação):', floatLittleEndian);
-    console.log('[DEBUG Hardware - Tempo Aquecimento] Valor (big-endian):', floatBigEndian.toFixed(2));
-  } else {
-    console.log('[DEBUG Hardware - Tempo Aquecimento] Buffer muito pequeno para float32 (precisa de 4 bytes, recebeu', bytes.length, ')');
-  }
-
   const status = parseHeatingTimeFromBase64(value);
   if (!status) {
     onMessage('⚠️ Não foi possível fazer parse do tempo de aquecimento do bloco');
@@ -89,14 +61,37 @@ export async function monitorTemperatureBlockHeatingTime(
     },
     onUpdate: async (value) => {
       if (!value) return;
+      
+      // Log detalhado do raw para debug
+      const bytes = base64ToBytes(value);
+      console.log('[DEBUG] Tempo Aquecimento - Base64:', value);
+      console.log('[DEBUG] Tempo Aquecimento - Bytes:', bytes);
+      console.log('[DEBUG] Tempo Aquecimento - Hex:', bytes.map(b => `0x${b.toString(16).padStart(2, '0')}`).join(' '));
+      console.log('[DEBUG] Tempo Aquecimento - Tamanho:', bytes.length, 'bytes');
+      
       const status = parseHeatingTimeFromBase64(value);
+      
       if (status) {
-        onMessage(
-          `📊 Aquecimento: ${status.hours}h${status.minutes.toString().padStart(2, '0')} (${status.totalMinutes}min) | RAW: ${value} | Hex: ${status.hexValue}`,
-        );
+        // Mensagem simplificada - apenas mostra o valor
+        const timeStr = `${status.hours}h${status.minutes.toString().padStart(2, '0')}`;
+        
+        // Se for zero, adiciona aviso (mas não mostra mensagem repetitiva se já sabemos que é zero)
+        // O hardware tem mostrado comportamento de sempre enviar 0x0000 após iniciar análise
+        if (status.totalMinutes === 0) {
+          // Log apenas no console para não poluir as mensagens do usuário
+          console.warn('[DEBUG] ⚠️ Tempo de aquecimento está zerado. Hardware pode ter resetado após iniciar análise.');
+          // Mostra mensagem simplificada sem aviso repetitivo
+          onMessage(`📊 Aquecimento: ${timeStr} (${status.totalMinutes}min) | Hex: ${status.hexValue}`);
+        } else {
+          onMessage(`📊 Aquecimento: ${timeStr} (${status.totalMinutes}min) | Hex: ${status.hexValue}`);
+        }
+        
         if (onHeatingTimeUpdate) {
           onHeatingTimeUpdate(status);
         }
+      } else {
+        console.error('[DEBUG] ⚠️ Parse falhou! Base64:', value, 'Bytes:', bytes);
+        onMessage(`⚠️ Não foi possível fazer parse do tempo de aquecimento | RAW: ${value}`);
       }
     },
     intervalMs,
