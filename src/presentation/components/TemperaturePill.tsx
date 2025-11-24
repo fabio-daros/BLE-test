@@ -12,9 +12,7 @@ import { AntDesign, MaterialCommunityIcons } from '@/utils/vector-icons-helper';
 import { colors } from '@presentation/theme';
 
 interface TemperaturePillProps {
-  /** Temperatura inicial em Celsius (usado se currentTempC não fornecido) */
-  initialTempC?: number;
-  /** Temperatura atual em tempo real (sobrescreve initialTempC) */
+  /** Temperatura atual em tempo real */
   currentTempC?: number | null;
   /** Label da temperatura */
   tempLabel?: string;
@@ -34,8 +32,7 @@ const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const BOTTOM_GUARD = 110;
 
 export const TemperaturePill: React.FC<TemperaturePillProps> = ({
-  initialTempC = 31,
-  currentTempC, // Nova prop para temperatura em tempo real
+  currentTempC,
   tempLabel = 'TEMPERATURA DO EQUIPAMENTO',
   tempMessage = null,
   startExpanded = true,
@@ -135,14 +132,14 @@ export const TemperaturePill: React.FC<TemperaturePillProps> = ({
   // Se currentTempC for null e não houver initialTempC, mostrar "--"
   const displayTemp = currentTempC !== null && currentTempC !== undefined 
     ? currentTempC 
-    : initialTempC;
+    : null;
 
   // Determinar se deve mostrar "--" (quando não há temperatura válida)
   const hasValidTemperature = currentTempC !== null && currentTempC !== undefined;
   const shouldShowPlaceholder = !hasValidTemperature;
 
   // Arredondar para 1 casa decimal (ex: 34.6 → 34.6, 34.65 → 34.7, 34.95 → 35.0)
-  const displayTempRounded = shouldShowPlaceholder 
+  const displayTempRounded = shouldShowPlaceholder || displayTemp === null
     ? null 
     : Math.round(displayTemp * 10) / 10;
 
@@ -282,6 +279,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.4,
     flexShrink: 1,
+    flex: 1, // 👈 Adicionar para ocupar espaço disponível
+    textAlign: 'center', // 👈 Centralizar o texto
   },
   tempChip: {
     backgroundColor: colors.goldBackground,

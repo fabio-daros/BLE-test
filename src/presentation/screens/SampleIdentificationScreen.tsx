@@ -16,6 +16,7 @@ import { colors } from '@presentation/theme';
 import IdentificationPipeConfirmed from '@assets/IdentificationPipeConfirmed.svg';
 import IdentificationPipeNotConfirmed from '@assets/IdentificationPipeNotConfirmed.svg';
 import IconMic from '@assets/Icone-mic.svg';
+import { useTemperatureBlockMonitoring } from '@/services/bluetooth/temperatureBlock';
 
 type SampleIdentificationScreenProps = {
   totalTubes: number;
@@ -207,17 +208,22 @@ export const SampleIdentificationScreen: React.FC<
         behavior={Platform.select({ ios: 'padding', android: undefined })}
       >
         {/* Pop-up de temperatura usando componente TemperaturePill */}
-        <TemperaturePill
-          initialTempC={31}
-          tempLabel="TEMPERATURA DO EQUIPAMENTO"
-          tempMessage={null}
-          startExpanded={true}
-          initialX={14}
-          initialY={58}
-          onClose={() => {
-            // Callback opcional se necessário
-          }}
-        />
+        {(() => {
+          const { temperature, isMonitoring } = useTemperatureBlockMonitoring();
+          return (
+            <TemperaturePill
+              currentTempC={isMonitoring && temperature !== null ? temperature : null}
+              tempLabel="TEMP. DO EQUIPAMENTO"
+              tempMessage={null}
+              startExpanded={true}
+              initialX={14}
+              initialY={58}
+              onClose={() => {
+                // Callback opcional se necessário
+              }}
+            />
+          );
+        })()}
 
         {/* Header padrão */}
         <AppHeader

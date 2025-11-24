@@ -1,15 +1,25 @@
 // AvailableTests.tsx
-import React, { memo, useMemo, useState, useEffect, useRef } from 'react';
+import React, {
+  memo,
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import {
   SafeAreaView,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   ScrollView,
   Alert,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  LayoutChangeEvent,
 } from 'react-native';
+import { Ionicons } from '@/utils/vector-icons-helper';
 import { AppHeader } from '@presentation/components';
 import { BottomBar } from '@/ui/BottomBar';
 import { memoryTestProfileRepository } from '@data/storage';
@@ -21,27 +31,25 @@ import { useTemperatureBlockConfig } from '@/services/bluetooth/temperatureBlock
 export type TestKey = 'cinomose' | 'ibv_geral' | 'ibv_especifico' | 'custom';
 
 interface TestItem {
-  id: number; // ID único do perfil
+  id: number;
   key: TestKey;
   label: string;
-  temperatureC: number; // 65
-  incubation: string; // "30min" | "60min" etc.
-  activeProfile: TestProfile; // Perfil ativo - agora obrigatório
+  temperatureC: number;
+  incubation: string;
+  activeProfile: TestProfile;
 }
 
 interface Props {
   onBack?: () => void;
   onGoHome?: () => void;
   onOpenHistory?: () => void;
-  onSelectTest?: (key: TestKey) => void; // dispara ao tocar em um card
-  onConfirmSelection?: (key: TestKey, profile?: TestProfile) => void; // dispara ao tocar em "Selecionar"
+  onSelectTest?: (key: TestKey) => void;
+  onConfirmSelection?: (key: TestKey, profile?: TestProfile) => void;
   tests?: TestItem[];
 }
 
-/** Espaço para não colidir com a BottomBar fixa */
 const BOTTOM_GUARD = 120;
 
-// Intervalo de sincronização (5 segundos)
 const SYNC_INTERVAL_MS = 5000;
 
 const AvailableTests: React.FC<Props> = ({
@@ -54,22 +62,28 @@ const AvailableTests: React.FC<Props> = ({
   const [selected, setSelected] = useState<number | null>(null); // ID do perfil selecionado
   const [tests, setTests] = useState<TestItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [canScroll, setCanScroll] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(false);
+
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrollViewRef = useRef<ScrollView | null>(null);
+
+  const layoutHeightRef = useRef(0);
+  const anchorBottomRef = useRef(0);
+  const scrollOffsetRef = useRef(0);
 
   const { logUserAction } = useNavigationLogger({
     screenName: 'AvailableTests',
     additionalContext: { hasProfileIntegration: true },
   });
 
-  // Hook para enviar configuração ao hardware - lógica separada da UI
   const { sendProfileConfig, isSending } = useTemperatureBlockConfig();
 
-  // Função para converter perfis ativos em TestItems
   const convertProfilesToTestItems = (
     activeProfiles: TestProfile[]
   ): TestItem[] => {
     return activeProfiles.map(profile => {
-      // Gerar label do teste baseado no tipo ou no nome do perfil
       const getLabel = (testType: string, profileName: string): string => {
         const typeLabels: Record<string, string> = {
           cinomose: 'Cinomose',
@@ -80,14 +94,13 @@ const AvailableTests: React.FC<Props> = ({
         return typeLabels[testType] || profileName;
       };
 
-      // Formatar tempo de incubação
       const formatIncubation = (minutes: number): string => {
         if (minutes === 0) return '0min';
         return `${minutes}min`;
       };
 
       return {
-        id: profile.id, // ID único do perfil
+        id: profile.id,
         key: profile.testType as TestKey,
         label: getLabel(profile.testType, profile.name),
         temperatureC: profile.targetTemperature,
@@ -100,11 +113,10 @@ const AvailableTests: React.FC<Props> = ({
   const loadProfiles = async () => {
     try {
       setLoading(true);
-      // Buscar apenas perfis ativos
+
       const activeProfiles =
         await memoryTestProfileRepository.findByStatus('active');
 
-      // Converter perfis ativos em TestItems
       const testItems = convertProfilesToTestItems(activeProfiles);
       setTests(testItems);
 
@@ -123,15 +135,12 @@ const AvailableTests: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    // Carregar perfis inicialmente
     loadProfiles();
 
-    // Configurar sincronização periódica
     syncIntervalRef.current = setInterval(() => {
       loadProfiles();
     }, SYNC_INTERVAL_MS);
 
-    // Cleanup: limpar intervalo quando componente desmontar
     return () => {
       if (syncIntervalRef.current) {
         clearInterval(syncIntervalRef.current);
@@ -152,7 +161,39 @@ const AvailableTests: React.FC<Props> = ({
     }
   };
 
-  const canConfirm = useMemo(() => !!selected && !isSending, [selected, isSending]);
+  const canConfirm = useMemo(
+    () => !!selected && !isSending,
+    [selected, isSending]
+  );
+
+  const updateScrollHintState = useCallback(() => {
+    const layoutH = layoutHeightRef.current;
+    const anchorBottom = anchorBottomRef.current;
+    const offsetY = scrollOffsetRef.current;
+
+    if (!layoutH || !anchorBottom) {
+      setCanScroll(false);
+      setShowScrollHint(false);
+      return;
+    }
+
+    // Parte visível inferior da tela dentro do ScrollView
+    const visibleBottom = layoutH + offsetY;
+
+    // Dá pra rolar de fato?
+    const canScrollNow = anchorBottom > layoutH + 4;
+    setCanScroll(canScrollNow);
+
+    if (!canScrollNow) {
+      setShowScrollHint(false);
+      return;
+    }
+
+    // Se o bottom do botão está abaixo da parte visível, mostra seta
+    const threshold = 8; // almofadinha pra não piscar
+    const shouldShowHint = anchorBottom > visibleBottom + threshold;
+    setShowScrollHint(shouldShowHint);
+  }, []); // 👈 Dependências vazias porque só usa refs
 
   // Função confirm - agora muito mais limpa usando o hook
   const confirm = async () => {
@@ -169,10 +210,10 @@ const AvailableTests: React.FC<Props> = ({
 
     console.log('[AvailableTests] ========== CONFIRM CLICADO ==========');
     console.log('[AvailableTests] Perfil selecionado:', profile.name);
-    
+
     // Enviar configuração ao hardware usando o hook
     const configSent = await sendProfileConfig(profile);
-    
+
     if (!configSent) {
       console.warn('[AvailableTests] ⚠️ Configuração não foi enviada');
       Alert.alert(
@@ -201,8 +242,10 @@ const AvailableTests: React.FC<Props> = ({
     }
 
     // Configuração enviada com sucesso
-    console.log('[AvailableTests] ✅ Configuração enviada! Confirmando seleção...');
-    
+    console.log(
+      '[AvailableTests] ✅ Configuração enviada! Confirmando seleção...'
+    );
+
     // Pequeno delay para garantir que o hardware processou
     await new Promise<void>(resolve => setTimeout(resolve, 200));
 
@@ -213,11 +256,35 @@ const AvailableTests: React.FC<Props> = ({
       profileName: profile.name,
       configSent: true,
       temperature: profile.targetTemperature,
-      reactionTime: profile.totalTime.minutes, // Removido conversão com seconds
+      reactionTime: profile.totalTime.minutes,
     });
-    
+
     console.log('[AvailableTests] ✅ Seleção confirmada com sucesso!');
   };
+
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => { // 👈 Envolver em useCallback
+    scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+    updateScrollHintState();
+  }, [updateScrollHintState]); // 👈 Adicionar dependência
+
+  const handleScrollHintPress = useCallback(() => { // 👈 Envolver em useCallback
+    if (!scrollViewRef.current) return;
+
+    const targetY = anchorBottomRef.current - layoutHeightRef.current + 40;
+    scrollViewRef.current.scrollTo({ y: targetY, animated: true });
+  }, []); // 👈 Sem dependências
+
+  const handleScrollViewLayout = useCallback((event: LayoutChangeEvent) => { // 👈 Handler tipado
+    const { height } = event.nativeEvent.layout;
+    layoutHeightRef.current = height;
+    updateScrollHintState();
+  }, [updateScrollHintState]);
+
+  const handleButtonContainerLayout = useCallback((event: LayoutChangeEvent) => { // 👈 Handler tipado
+    const { y, height } = event.nativeEvent.layout;
+    anchorBottomRef.current = y + height;
+    updateScrollHintState();
+  }, [updateScrollHintState]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -233,13 +300,17 @@ const AvailableTests: React.FC<Props> = ({
       />
 
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.scrollContent}
         style={styles.scrollView}
         showsVerticalScrollIndicator={true}
         nestedScrollEnabled={true}
         indicatorStyle="default"
         bounces={true}
-        alwaysBounceVertical={false} // Mudar para false - só bounce se houver conteúdo para rolar
+        alwaysBounceVertical={false}
+        scrollEventThrottle={16}
+        onLayout={handleScrollViewLayout} // 👈 Usar handler tipado
+        onScroll={handleScroll}
       >
         {/* Título */}
         <View style={styles.titleWrap}>
@@ -278,20 +349,46 @@ const AvailableTests: React.FC<Props> = ({
           </View>
         )}
 
-        {/* CTA Selecionar */}
-        <TouchableOpacity
-          style={[styles.cta, !canConfirm && styles.ctaDisabled]}
-          activeOpacity={canConfirm ? 0.9 : 1}
-          onPress={confirm}
-          disabled={!canConfirm}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !canConfirm }}
+
+        <View
+          onLayout={handleButtonContainerLayout}
         >
-          <Text style={[styles.ctaText, !canConfirm && styles.ctaTextDisabled]}>
-            Selecionar
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.cta, !canConfirm && styles.ctaDisabled]}
+            activeOpacity={canConfirm ? 0.9 : 1}
+            onPress={confirm}
+            disabled={!canConfirm}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !canConfirm }}
+          >
+            <Text
+              style={[styles.ctaText, !canConfirm && styles.ctaTextDisabled]}
+            >
+              Selecionar
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      {canScroll && showScrollHint && (
+        <View style={styles.scrollHintContainer} pointerEvents="box-none">
+          <TouchableOpacity
+            style={styles.scrollHintBubble}
+            activeOpacity={0.8}
+            onPress={handleScrollHintPress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Deslize para ver mais conteúdo"
+          >
+            <Ionicons
+              name="chevron-down"
+              size={20}
+              color={colors.goldAlt4}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+
 
       <BottomBar fixed />
     </SafeAreaView>
@@ -346,7 +443,10 @@ const ExpandableOption = memo(function ExpandableOption({
           </View>
           <View style={styles.pill}>
             <Text style={styles.pillText}>
-              Tipo: {item.activeProfile.hardwareTestType === 'colorimetric' ? 'Colorimétrico' : 'Fluorimétrico'}
+              Tipo:{' '}
+              {item.activeProfile.hardwareTestType === 'colorimetric'
+                ? 'Colorimétrico'
+                : 'Fluorimétrico'}
             </Text>
           </View>
         </View>
@@ -367,11 +467,8 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingBottom: BOTTOM_GUARD,
-    // REMOVER flexGrow completamente - ele impede o scroll!
-    // O conteúdo deve crescer naturalmente sem flexGrow
   },
 
-  // decorativos
   decoTop: {
     position: 'absolute',
     top: -40,
@@ -551,6 +648,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMuted,
     textAlign: 'center',
+  },
+
+  // Hint de scroll
+  scrollHintContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: BOTTOM_GUARD - 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  scrollHintBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: colors.goldAlt4,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

@@ -2,27 +2,31 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import type { Device } from 'react-native-ble-plx';
 import { useBluetooth } from '@/contexts/BluetoothContext';
 import {
-  attachTemperatureBlockMonitors,
-  detachTemperatureBlockMonitors,
-  type TemperatureBlockSubscriptions,
-} from './temperatureBlockReader';
-import { TEMPERATURE_BLOCK_SERVICE_UUID } from './temperatureBlockProtocol';
+  monitorAnalysisElapsedTime,
+  type AnalysisElapsedTimeStatus,
+} from './analysisElapsedTimeReader';
+import { EQUIPMENT_STATUS_SERVICE_UUID } from '../equipmentStatus/equipmentStatusProtocol';
 import { logger } from '@services/logging';
 
-export interface UseTemperatureBlockMonitoringResult {
-  temperature: number | null;
+export interface UseAnalysisElapsedTimeResult {
+  /** Tempo decorrido em segundos (calculado de hours * 60 + minutes) */
+  elapsedSeconds: number | null;
+  /** Status completo do tempo decorrido */
+  status: AnalysisElapsedTimeStatus | null;
+  /** Se está monitorando */
   isMonitoring: boolean;
+  /** Erro, se houver */
   error: string | null;
 }
 
 /**
- * Hook customizado para monitorar a temperatura do bloco em tempo real via BLE.
+ * Hook customizado para monitorar o tempo decorrido da análise em tempo real via BLE.
  * Automaticamente obtém o Device conectado e inicia o monitoramento.
  * 
- * @returns {UseTemperatureBlockMonitoringResult} Objeto com temperatura atual, estado de monitoramento e erro
+ * @returns {UseAnalysisElapsedTimeResult} Objeto com tempo decorrido, estado de monitoramento e erro
  */
-export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringResult {
-  const [temperature, setTemperature] = useState<number | null>(null);
+export function useAnalysisElapsedTime(): UseAnalysisElapsedTimeResult {
+  const [status, setStatus] = useState<AnalysisElapsedTimeStatus | null>(null);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,16 +37,15 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
     ensureBleManagerReady,
   } = useBluetooth();
 
-  const subscriptionsRef = useRef<TemperatureBlockSubscriptions | null>(null);
+  const stopMonitorRef = useRef<(() => void) | null>(null);
   const isMountedRef = useRef(true);
 
   /**
    * Obtém o Device conectado usando múltiplas estratégias de fallback.
-   * Mesma lógica do useTemperatureBlockConfig para garantir compatibilidade.
    */
   const getConnectedDevice = useCallback(async (): Promise<Device | null> => {
     if (!connectedDevice || !bleManager || !bleManagerAvailable) {
-      console.log('[useTemperatureBlockMonitoring] Nenhum dispositivo conectado');
+      console.log('[useAnalysisElapsedTime] Nenhum dispositivo conectado');
       return null;
     }
 
@@ -61,11 +64,11 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
         // Tentar via connectedDevices
         try {
           const byService = await bleManager.connectedDevices([
-            TEMPERATURE_BLOCK_SERVICE_UUID,
+            EQUIPMENT_STATUS_SERVICE_UUID,
           ]);
           device = byService.find(d => d.id === deviceId) || null;
         } catch (e) {
-          console.warn('[useTemperatureBlockMonitoring] Erro connectedDevices:', e);
+          console.warn('[useAnalysisElapsedTime] Erro connectedDevices:', e);
         }
 
         // Fallback: devices([id])
@@ -76,7 +79,7 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
               device = byId[0];
             }
           } catch (e) {
-            console.warn('[useTemperatureBlockMonitoring] Erro devices:', e);
+            console.warn('[useAnalysisElapsedTime] Erro devices:', e);
           }
         }
 
@@ -87,7 +90,7 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
               autoConnect: true,
             });
           } catch (e: any) {
-            console.warn('[useTemperatureBlockMonitoring] Erro connectToDevice:', e?.message);
+            console.warn('[useAnalysisElapsedTime] Erro connectToDevice:', e?.message);
           }
         }
       } else {
@@ -98,7 +101,7 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
           });
           await device.discoverAllServicesAndCharacteristics();
         } catch (e: any) {
-          console.warn('[useTemperatureBlockMonitoring] Erro ao reconectar:', e?.message);
+          console.warn('[useAnalysisElapsedTime] Erro ao reconectar:', e?.message);
         }
       }
 
@@ -107,7 +110,7 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
       const isConnected = await device.isConnected();
       return isConnected ? device : null;
     } catch (error: any) {
-      console.error('[useTemperatureBlockMonitoring] Erro ao obter Device:', error?.message || error);
+      console.error('[useAnalysisElapsedTime] Erro ao obter Device:', error?.message || error);
       return null;
     }
   }, [connectedDevice, bleManager, bleManagerAvailable, ensureBleManagerReady]);
@@ -118,9 +121,9 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
 
     const startMonitoring = async () => {
       if (!connectedDevice) {
-        console.log('[useTemperatureBlockMonitoring] Nenhum dispositivo conectado, não iniciando monitoramento');
+        console.log('[useAnalysisElapsedTime] Nenhum dispositivo conectado, não iniciando monitoramento');
         setIsMonitoring(false);
-        setTemperature(null);
+        setStatus(null);
         setError(null);
         return;
       }
@@ -134,38 +137,40 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
           throw new Error('Dispositivo não conectado');
         }
 
-        console.log('[useTemperatureBlockMonitoring] Iniciando monitoramento da temperatura...');
+        console.log('[useAnalysisElapsedTime] Iniciando monitoramento do tempo decorrido...');
 
         // Callback de log
         const onMessage = (msg: string) => {
-          console.log(`[useTemperatureBlockMonitoring] ${msg}`);
+          console.log(`[useAnalysisElapsedTime] ${msg}`);
           logger.info(msg, {}, 'bluetooth');
         };
 
-        // Callback quando a temperatura é atualizada
-        const onTemperatureUpdate = (temp: number) => {
+        // Callback quando o tempo decorrido é atualizado
+        const onElapsedTimeUpdate = (elapsedStatus: AnalysisElapsedTimeStatus) => {
           if (isMountedRef.current) {
-            console.log(`[useTemperatureBlockMonitoring] 🌡️ Temperatura atualizada: ${temp}°C`);
-            setTemperature(temp);
+            console.log(
+              `[useAnalysisElapsedTime] ⏱️ Tempo decorrido atualizado: ${elapsedStatus.hours}h${elapsedStatus.minutes.toString().padStart(2, '0')} (${elapsedStatus.totalMinutes}min)`,
+            );
+            setStatus(elapsedStatus);
           }
         };
 
         // Iniciar monitoramento
-        const subs = await attachTemperatureBlockMonitors(
+        const stopMonitor = await monitorAnalysisElapsedTime(
           device,
           onMessage,
-          onTemperatureUpdate, // Callback de atualização
+          onElapsedTimeUpdate,
         );
 
-        subscriptionsRef.current = subs;
-        console.log('[useTemperatureBlockMonitoring] ✅ Monitoramento iniciado');
+        stopMonitorRef.current = stopMonitor;
+        console.log('[useAnalysisElapsedTime] ✅ Monitoramento iniciado');
 
       } catch (error: any) {
         const errorMsg = error?.message || 'Erro desconhecido';
-        console.error('[useTemperatureBlockMonitoring] ❌ Erro ao iniciar monitoramento:', errorMsg);
+        console.error('[useAnalysisElapsedTime] ❌ Erro ao iniciar monitoramento:', errorMsg);
         setError(errorMsg);
         setIsMonitoring(false);
-        setTemperature(null); // Zerar temperatura em caso de erro
+        setStatus(null);
       }
     };
 
@@ -174,27 +179,30 @@ export function useTemperatureBlockMonitoring(): UseTemperatureBlockMonitoringRe
     // Cleanup: parar monitoramento quando desmontar
     return () => {
       isMountedRef.current = false;
-      console.log('[useTemperatureBlockMonitoring] Parando monitoramento...');
+      console.log('[useAnalysisElapsedTime] Parando monitoramento...');
 
-      if (subscriptionsRef.current) {
+      if (stopMonitorRef.current) {
         try {
-          detachTemperatureBlockMonitors(subscriptionsRef.current, (msg) => {
-            console.log(`[useTemperatureBlockMonitoring] ${msg}`);
-          });
-          subscriptionsRef.current = null;
+          stopMonitorRef.current();
+          stopMonitorRef.current = null;
         } catch (e) {
-          console.warn('[useTemperatureBlockMonitoring] Erro ao parar monitoramento:', e);
+          console.warn('[useAnalysisElapsedTime] Erro ao parar monitoramento:', e);
         }
       }
 
       setIsMonitoring(false);
-      setTemperature(null); // Zerar temperatura quando o monitoramento para
+      setStatus(null);
     };
   }, [connectedDevice, getConnectedDevice]);
 
+  // Calcular elapsedSeconds a partir do status
+  const elapsedSeconds = status ? status.totalMinutes * 60 : null;
+
   return {
-    temperature,
+    elapsedSeconds,
+    status,
     isMonitoring,
     error,
   };
 }
+

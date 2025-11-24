@@ -14,6 +14,7 @@ import { AntDesign } from '@/utils/vector-icons-helper';
 import { AppHeader, TemperaturePill } from '@presentation/components';
 import { BottomBar } from '@/ui/BottomBar';
 import { colors } from '@presentation/theme';
+import { useTemperatureBlockMonitoring } from '@/services/bluetooth/temperatureBlock'; // 👈 Adicionar import
 // import { ENV } from '@/config/env'; // Descomentar quando o backend estiver disponível
 
 interface Props {
@@ -61,7 +62,7 @@ const PreTestInstructions: React.FC<Props> = ({
   onStart,
 
   showTemperature = true,
-  temperatureLabel = 'TEMPERATURA DO EQUIPAMENTO',
+  temperatureLabel = 'TEMP. DO EQUIPAMENTO',
   temperatureValue = '63ºC',
   onCloseTemperature,
 
@@ -125,17 +126,19 @@ const PreTestInstructions: React.FC<Props> = ({
       <AppHeader {...(onBack && { onBack })} {...(onGoHome && { onGoHome })} {...(onOpenHistory && { onOpenHistory })} />
 
       {/* Pop-up de temperatura usando componente TemperaturePill */}
-      <TemperaturePill
-        initialTempC={parseInt(temperatureValue.replace('ºC', ''))}
-        tempLabel={temperatureLabel}
-        tempMessage={null}
-        startExpanded={true}
-        initialX={16}
-        initialY={52}
-        onClose={() => {
-          onCloseTemperature?.();
-        }}
-      />
+      {(() => {
+        const { temperature, isMonitoring } = useTemperatureBlockMonitoring(); // 👈 Adicionar hook
+        return (
+          <TemperaturePill
+            currentTempC={isMonitoring && temperature !== null ? temperature : null}
+            tempLabel={temperatureLabel}
+            tempMessage={null}
+            startExpanded={true}
+            initialX={16}
+            initialY={52}
+          />
+        );
+      })()}
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: BOTTOM_GUARD }}

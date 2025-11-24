@@ -120,7 +120,7 @@ export async function attachTemperatureBlockMonitors(
     // 3. Leitura inicial do status do equipamento (READ)
     await readEquipmentStatus(device, onMessage);
 
-    // 4. Monitora temperatura do bloco (leitura periódica)
+    // 5. Monitora temperatura do bloco (leitura periódica)
     try {
       const stopMonitor = await monitorTemperatureBlock(
         device,

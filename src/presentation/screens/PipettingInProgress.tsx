@@ -13,6 +13,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { TemperaturePill } from '@presentation/components';
+import { useTemperatureBlockMonitoring } from '@/services/bluetooth/temperatureBlock';
 import Tube from '../../../assets/Vector.svg';
 import TubeSelected from '../../../assets/VectorSelected.svg';
 import { colors } from '../theme';
@@ -111,15 +112,19 @@ const PipettingInProgressScreen: React.FC<Props> = ({
       {renderHeader ?? <FallbackHeader />}
 
       {/* Pop-up de temperatura como na SummaryCinomose */}
-      <TemperaturePill
-        initialTempC={31}
-        tempLabel="TEMPERATURA DO EQUIPAMENTO"
-        tempMessage="O equipamento está sendo aquecido para a execução do teste."
-        startExpanded={true}
-        initialX={14}
-        initialY={58}
-        onClose={() => {}}
-      />
+      {(() => {
+        const { temperature, isMonitoring } = useTemperatureBlockMonitoring();
+        return (
+          <TemperaturePill
+            currentTempC={isMonitoring && temperature !== null ? temperature : null}
+            tempLabel="TEMP. DO EQUIPAMENTO"
+            // tempMessage="O equipamento está sendo aquecido para a execução do teste."
+            startExpanded={true}
+            initialX={14}
+            initialY={58}
+          />
+        );
+      })()}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

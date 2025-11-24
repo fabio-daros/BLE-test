@@ -17,6 +17,7 @@ import { AppHeader, TemperaturePill } from '@presentation/components';
 import { BottomBar } from '@/ui/BottomBar';
 import { AntDesign } from '@/utils/vector-icons-helper';
 import { colors } from '@presentation/theme';
+import { useTemperatureBlockMonitoring } from '@/services/bluetooth/temperatureBlock';
 
 import Tube from '../../../assets/Vector.svg';
 import TubeSelected from '../../../assets/VectorSelected.svg';
@@ -115,17 +116,22 @@ const SummaryCinomose: React.FC<Props> = ({
       />
 
       {/* Pop-up de temperatura usando componente TemperaturePill */}
-      <TemperaturePill
-        initialTempC={31}
-        tempLabel="TEMPERATURA DO EQUIPAMENTO"
-        tempMessage="O equipamento está sendo aquecido para a execução do teste."
-        startExpanded={true}
-        initialX={14}
-        initialY={58}
-        onClose={() => {
-          // Callback opcional se necessário
-        }}
-      />
+      {(() => {
+        const { temperature, isMonitoring } = useTemperatureBlockMonitoring();
+        return (
+          <TemperaturePill
+            currentTempC={isMonitoring && temperature !== null ? temperature : null}
+            tempLabel="TEMP. DO EQUIPAMENTO"
+            // tempMessage="O equipamento está sendo aquecido para a execução do teste."
+            startExpanded={true}
+            initialX={14}
+            initialY={58}
+            onClose={() => {
+              // Callback opcional se necessário
+            }}
+          />
+        );
+      })()}
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

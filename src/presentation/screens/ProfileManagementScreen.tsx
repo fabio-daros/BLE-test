@@ -289,7 +289,7 @@ export const ProfileManagementScreen: React.FC<
             setShowEditModal(true);
           }}
         >
-          <Text style={styles.actionButtonText}>Editar</Text>
+          <Text style={styles.editButtonText}>Editar</Text>
         </TouchableOpacity>
 
         {profile.status !== 'active' && (
@@ -328,10 +328,11 @@ export const ProfileManagementScreen: React.FC<
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={onNavigateBack}>
-            <Text style={styles.backButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} /> {/* 👈 Adicionar spacer invisível */}
           <Text style={styles.title}>Gerenciar Perfis</Text>
+          <TouchableOpacity style={styles.backButton} onPress={onNavigateBack}>
+            <Text style={styles.backButtonText}>Voltar</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Filtros */}
@@ -762,7 +763,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 24,
-    paddingTop: Platform.OS === 'android' ? 20 : 0,
+    paddingTop: Platform.OS === 'android' ? 8 : 0,
+    position: 'relative',
   },
   backButton: {
     borderWidth: 1,
@@ -771,18 +773,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.white,
+    marginTop: Platform.OS === 'android' ? -80 : 0,
+    zIndex: 1,
   },
-  backButtonText: {
+  backButtonText: { // 👈 Adicionar este estilo que está faltando
     color: colors.gold,
     fontSize: 14,
     fontWeight: '600',
+  },
+  headerSpacer: {
+    width: 100,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    flex: 1,
-    textAlign: 'center',
+    position: 'absolute', // 👈 Usar position absolute para centralizar
+    left: 0,
+    right: 0,
+    textAlign: 'center', // 👈 Centralizar o texto
   },
   loadingText: {
     fontSize: 16,
@@ -914,6 +923,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: colors.white,
+  },
+  editButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   createButton: {
     backgroundColor: colors.gold,

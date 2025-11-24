@@ -9,3 +9,4 @@ export * from './equipmentStatus';
 export * from './temperatureBlock';
 export * from './preTest';
 export * from './batteryStats';
+export * from './analysisElapsedTime';
